@@ -1,0 +1,22 @@
+# PyCharm specific files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# Python specific files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+.venv/
+.env
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
+# Operating system specific files
+.DS_Store
+Thumbs.db
