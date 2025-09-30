@@ -1,0 +1,5 @@
+Flask
+Flask-CORS
+pybaseball
+pandas
+requests
