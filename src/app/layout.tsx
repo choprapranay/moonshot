@@ -15,7 +15,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "Moonshot",
-  description: "Plate Discipline Analysis for Baseball Coaches",
+  description: "Plate Discipline Analysis for Baseball Teams",
 };
 
 export default function RootLayout({
