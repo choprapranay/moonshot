@@ -39,3 +39,24 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# PyCharm specific files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# Python specific files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+.venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
+# Operating system specific files
+Thumbs.db
