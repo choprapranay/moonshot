@@ -5,7 +5,8 @@ Run the backend flask server, then the development server:
 ```bash
 cd backend
 python app.py
-# then (in root dir)
+# then back in root dir
+cd ..
 npm run dev
 ```
 
