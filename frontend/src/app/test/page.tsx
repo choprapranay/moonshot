@@ -6,8 +6,8 @@ type PitchData = {
   pitch_type: string;
   speed: number | null;
   description: string | null;
-  player_id: string;
   diagram_index: number | null;
+  player_name: string | null;
 };
 
 type GameData = {
@@ -103,7 +103,8 @@ export default function TestPage() {
                         className="mb-2 cursor-pointer hover:underline"
                         onClick={() => setSelectedDiagramIndex(p.diagram_index ?? null)}
                       >
-                        <span className="font-semibold">{p.pitch_type}</span>
+                        <span className="font-semibold">{p.player_name ?? "Unknown"}</span>
+                        <span className="font-semibold"> - {p.pitch_type}</span>
                         <span> — {p.speed ?? "N/A"} mph</span>
                         {p.description ? <span> — {p.description}</span> : null}
                       </li>
