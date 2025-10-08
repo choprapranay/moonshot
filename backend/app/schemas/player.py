@@ -16,7 +16,4 @@ class PlayerUpdate(BaseModel):
 
 class PlayerResponse(BaseModel):
     id: UUID
-    first_name: str
-    last_name: str
-    position: Optional[str]
-    team: Optional[str]
+    name: str

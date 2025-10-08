@@ -27,8 +27,6 @@ export default function Home() {
             justifyContent: "center",
             alignItems: "center",
             backgroundColor: "#1a1c3a",
-            color: "white",
-            fontFamily: "Arial, sans-serif",
           }}
       >
         <h1 style={{ fontSize: "3rem", fontWeight: "bold", marginBottom: "0.5rem" }}>
