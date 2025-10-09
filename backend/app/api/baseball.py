@@ -28,8 +28,8 @@ class PitchData(BaseModel):
    pitch_type: str
    speed: Optional[float]
    description: Optional[str]
-   diagram_index: Optional[int]
    player_name: Optional[str]
+   diagram_index: Optional[int]
 
 class FetchGameDataAndSaveResponse(BaseModel):
    game_id: str
@@ -49,32 +49,35 @@ def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
       #  'intercept_ball_minus_batter_pos_x_inches',
       #  'intercept_ball_minus_batter_pos_y_inches'],
    # check if game data already exists in games table
+
+   # TODO: batch insert and join table for player name
    game_row_raw = supabase.table("games").select("id, game_date, home_team, away_team").eq("game_pk", game_pk).maybe_single().execute()
    
+
    if game_row_raw and game_row_raw.data:
       game_row = game_row_raw.data
    else:
       game_row = None
 
    if game_row:
-      pitches = (
-         supabase
-            .table("pitches")
-            .select("pitch_type,speed,description,batter_name,diagram_index")
-            .eq("game_id", game_row["id"]) 
-            .execute()
-            .data
-      )
+      pitches = supabase.table("pitches").select("*").eq("game_id", game_row["id"]).execute().data
+      player_ids = list({p["batter_id"] for p in pitches if p.get("batter_id")})
+      player_data_by_id = {}
+      if player_ids:
+         players_rows = supabase.table("players").select("id, diagram_index, name").in_("id", player_ids).execute().data
+         player_data_by_id = {row["id"]: row for row in players_rows}
+
       pitches_data = [
          PitchData(
-            pitch_type=str(pitch.get("pitch_type") or ""),
+            pitch_type=pitch["pitch_type"],
             speed=float(pitch["speed"]),
-            description=pitch.get("description"),
-            player_name=pitch.get("batter_name"),
-            diagram_index=int(pitch["diagram_index"]),
+            description=pitch["description"],
+            player_name=player_data_by_id[pitch["batter_id"]]["name"],
+            diagram_index=player_data_by_id[pitch["batter_id"]]["diagram_index"],
          )
          for pitch in pitches
       ]
+      print(pitches_data)
       return FetchGameDataAndSaveResponse(
          game_id=game_row["id"],
          gameData=GameData(
@@ -100,25 +103,42 @@ def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
    supabase.table("games").upsert(game_payload, on_conflict="game_pk").execute()
    game_id = supabase.table("games").select("id").eq("game_pk", game_payload["game_pk"]).single().execute().data["id"]
 
+   # extract player data to upload to player table
+   name_to_player_id = {}
+   for i in range(len(df)):
+      row = df.iloc[i]
+      player_name = str(row["player_name"])
+
+      if player_name in name_to_player_id:
+         continue
+      else:
+         player_payload = {
+            "name": player_name,
+            "diagram_index": random.randint(0, 100), # TEMPORARY
+         }
+         supabase.table("players").upsert(player_payload, on_conflict="name").execute()
+         name_to_player_id[player_name] = supabase.table("players").select("id").eq("name", player_name).single().execute().data["id"]
+   
    pitches_data = []
    # extract pitches data to upload to pitches table
    for i in range(len(df)):
       row = df.iloc[i]
+      player_name = str(row["player_name"]) if pd.notna(row["player_name"]) else None
+      batter_uuid = name_to_player_id.get(player_name)
       pitch_payload = {
          "game_id": game_id,
-         "batter_name": str(row["player_name"]),
-         "pitch_type": str(row["pitch_type"]),
-         "speed": float(row["release_speed"]),
-         "description": str(row["description"]),
-         "diagram_index": random.randint(0, 100), # TEMPORARY
+         "batter_id": batter_uuid,
+         "pitch_type": str(row["pitch_type"]) if pd.notna(row["pitch_type"]) else "",
+         "speed": float(row["release_speed"]) if pd.notna(row["release_speed"]) else None,
+         "description": str(row["description"]) if pd.notna(row["description"]) else None,
       }
       supabase.table("pitches").upsert(pitch_payload).execute()
       pitches_data.append(PitchData(
          pitch_type=str(row["pitch_type"]) if pd.notna(row["pitch_type"]) else "",
          speed=float(row["release_speed"]) if pd.notna(row["release_speed"]) else None,
          description=str(row["description"]) if pd.notna(row["description"]) else None,
-         player_name=str(row["player_name"]) if pd.notna(row["player_name"]) else None,
-         diagram_index=pitch_payload["diagram_index"],
+         player_name=player_name,
+         diagram_index=random.randint(0, 100), # TEMPORARY
       ))
    return FetchGameDataAndSaveResponse(
       game_id=game_id,
