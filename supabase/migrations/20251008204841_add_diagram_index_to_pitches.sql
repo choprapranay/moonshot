@@ -1,0 +1,1 @@
+ALTER TABLE "public"."pitches" ADD COLUMN "diagram_index" integer;

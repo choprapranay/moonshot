@@ -1,13 +1,16 @@
+
+"use client";
+
 import { useState } from "react";
 
-function App() {
+export default function Home() {
   const [gameId, setGameId] = useState("");
-  const [data, setData] = useState(null);
+  const [data, setData] = useState<any[] | null>(null);
 
   const fetchData = async () => {
     if (!gameId) return;
     try {
-      const res = await fetch(`http://127.0.0.1:8080/game/${gameId}`);
+      const res = await fetch(`http://127.0.0.1:8000/game/${gameId}`);
       const json = await res.json();
       setData(json);
     } catch (err) {
@@ -24,8 +27,6 @@ function App() {
             justifyContent: "center",
             alignItems: "center",
             backgroundColor: "#1a1c3a",
-            color: "white",
-            fontFamily: "Arial, sans-serif",
           }}
       >
         <h1 style={{ fontSize: "3rem", fontWeight: "bold", marginBottom: "0.5rem" }}>
@@ -96,7 +97,7 @@ function App() {
                   <h2 style={{ marginBottom: "1rem", color: "#4a90e2" }}>
                       Pitch Details
                   </h2>
-                  {data.slice(0, 5).map((row, i) => (
+                  {data.slice(0, 5).map((row: any, i: number) => (
                       <div
                           key={i}
                           style={{
@@ -117,5 +118,3 @@ function App() {
       </div>
   );
 }
-
-export default App;

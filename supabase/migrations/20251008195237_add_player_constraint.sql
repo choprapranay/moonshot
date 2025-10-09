@@ -1,0 +1,1 @@
+ALTER TABLE "public"."players" ADD CONSTRAINT "players_name_key" UNIQUE ("name");

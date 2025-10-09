@@ -1,0 +1,20 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from app.api import games, baseball
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(games.router)
+app.include_router(baseball.router)
+
+@app.get("/")
+def read_root():
+    return {"message": "MOONSHOT APIS GRRRRRRRRRRRRR"}
