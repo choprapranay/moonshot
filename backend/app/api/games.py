@@ -2,12 +2,16 @@ from fastapi import APIRouter, HTTPException
 import pandas as pd
 import json
 from datetime import datetime
-from app.schemas.game import TmpItem
+
+from pydantic import BaseModel
 from app.db.database import supabase
 from pybaseball import statcast_single_game
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
+
+class TmpItem(BaseModel):
+    name: str   
 
 @router.get("/game/{game_pk}")
 def get_game_data(game_pk: int):
