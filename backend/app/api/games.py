@@ -26,29 +26,7 @@ def get_game_data(game_pk: int):
               .where(pd.notnull(df), pd.NA)
         )
 
-        return JSONResponse(content=json.loads(clean_df.to_json(orient="records")))
+        return clean_df
 
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-
-@router.post("/addToTmpData")
-def add_to_tmp_data(payload: TmpItem):
-    try:
-        res = supabase.table("games").insert({
-            "game_date": datetime.now().strftime("%Y-%m-%d"),
-            "home_team": payload.name,
-            "away_team": payload.name
-        }).execute()
-        return {"ok": True, "count": getattr(res, "count", None)}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@router.get("/retrieveFromTmpData")
-def retrieve_from_tmp_data():
-    try:
-        res = supabase.table("games").select("id,game_date,home_team,away_team").order("id", desc=True).execute()
-        return res.data or []
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
