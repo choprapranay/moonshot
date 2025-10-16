@@ -1,6 +1,3 @@
-"""
-Use cases - extracted business logic from baseball.py
-"""
 import random
 from pybaseball import statcast_single_game
 import pandas as pd
@@ -8,19 +5,13 @@ from typing import Optional, List, Dict, Any
 
 
 class GameOperations:
-    """
-    Business logic for game operations
-    Just extracted from baseball.py - minimal changes
-    """
+
     
     def __init__(self, supabase_client):
         self.supabase = supabase_client
     
     def fetch_game_data_and_save(self, game_pk: int) -> Dict[str, Any]:
-        """
-        This is your EXACT SAME CODE from baseball.py
-        Just moved into a method
-        """
+      
         # Check if game data already exists in games table
         game_row_raw = self.supabase.table("games").select("id, game_date, home_team, away_team").eq("game_pk", game_pk).maybe_single().execute()
         
