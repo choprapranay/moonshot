@@ -7,7 +7,7 @@ import json
 
 from pydantic import BaseModel
 from typing import List, Optional
-from app.db.database import supabase
+from app.infrastructure.database.database import supabase
 from datetime import datetime
 
 router = APIRouter()
@@ -33,7 +33,7 @@ class FetchGameDataAndSaveResponse(BaseModel):
    gameData: GameData
    pitches: List[PitchData]
 
-def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:   
+def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
    # extract game data to upload to games table
    # (tmp) endpoint data keys
    # Index(['pitch_type', 'game_date', 'release_speed', 'release_pos_x',
@@ -49,7 +49,7 @@ def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
 
    # TODO: batch insert and join table for player name
    game_row_raw = supabase.table("games").select("id, game_date, home_team, away_team").eq("game_pk", game_pk).maybe_single().execute()
-   
+
 
    if game_row_raw and game_row_raw.data:
       game_row = game_row_raw.data
@@ -116,7 +116,7 @@ def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
       "home_team": r["home_team"],
       "away_team": r["away_team"],
    }
-   
+
    supabase.table("games").upsert(game_payload, on_conflict="game_pk").execute()
    game_id = supabase.table("games").select("id").eq("game_pk", game_payload["game_pk"]).single().execute().data["id"]
 
@@ -150,8 +150,8 @@ def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
          row["name"]: row["id"]
          for row in players_rows
       }
-   
-      
+
+
    pitches_data = []
    # extract pitches data to upload to pitches table
    for i in range(len(df)):

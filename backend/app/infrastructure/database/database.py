@@ -1,5 +1,5 @@
 from supabase import create_client
-from app.core.config import settings
+from app.infrastructure.config.settings import settings
 
 def get_supabase_client():
     if not settings.SUPABASE_URL or not settings.SUPABASE_KEY:
