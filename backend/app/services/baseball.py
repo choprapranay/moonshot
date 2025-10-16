@@ -1,37 +1,18 @@
 
 import random
 from fastapi import APIRouter, HTTPException
-from pybaseball import statcast_single_game
 import pandas as pd
-import json
-
-from pydantic import BaseModel
-from typing import List, Optional
-from app.db.database import supabase
-from datetime import datetime
+from ..api.games import get_game_data
+from app.repositories.games_repository import get_game_by_pk, upsert_game, get_game_id_by_pk
+from app.repositories.players_repository import upsert_players, get_player_id_map_by_names
+from app.repositories.pitches_repository import get_pitches_with_player_by_game_id, upsert_pitches
+from app.schemas.baseball import FetchGameDataAndSaveResponse, GameData, PitchData
 
 router = APIRouter()
 
 @router.get("/game-data/{game_pk}")
 def get_game_data_with_db(game_pk: int):
    return fetch_game_data_and_save(game_pk)
-
-class GameData(BaseModel):
-   game_date: datetime
-   home_team: str
-   away_team: str
-
-class PitchData(BaseModel):
-   pitch_type: str
-   speed: Optional[float]
-   description: Optional[str]
-   player_name: Optional[str]
-   diagram_index: Optional[int]
-
-class FetchGameDataAndSaveResponse(BaseModel):
-   game_id: str
-   gameData: GameData
-   pitches: List[PitchData]
 
 def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:   
    # extract game data to upload to games table
@@ -47,30 +28,25 @@ def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
       #  'intercept_ball_minus_batter_pos_y_inches'],
    # check if game data already exists in games table
 
-   # TODO: batch insert and join table for player name
-   game_row_raw = supabase.table("games").select("id, game_date, home_team, away_team").eq("game_pk", game_pk).maybe_single().execute()
-   
-
-   if game_row_raw and game_row_raw.data:
-      game_row = game_row_raw.data
-   else:
-      game_row = None
+   game_row = get_game_by_pk(game_pk)
 
    # this means game data already exists in games table
    if game_row:
       # fetch pitches data and player data per pitch
-      pitches = supabase.table("pitches").select("*, players(name, diagram_index)").eq("game_id", game_row["id"]).execute().data
+      pitches = get_pitches_with_player_by_game_id(game_row["id"])
 
-      pitches_data = [
-         PitchData(
-            pitch_type=pitch["pitch_type"],
-            speed=float(pitch["speed"]),
-            description=pitch["description"],
-            player_name=pitch["players"]["name"],
-            diagram_index=pitch["players"]["diagram_index"],
+      pitches_data = []
+      for pitch in pitches:
+         player = pitch.get("players") or {}
+         pitches_data.append(
+            PitchData(
+               pitch_type=pitch.get("pitch_type") or "",
+               speed=float(pitch["speed"]) if pitch.get("speed") is not None else None,
+               description=pitch.get("description"),
+               player_name=player.get("name"),
+               diagram_index=player.get("diagram_index"),
+            )
          )
-         for pitch in pitches
-      ]
 
       # return game data and pitches data
       return FetchGameDataAndSaveResponse(
@@ -84,7 +60,7 @@ def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
       )
    # if game data does not exist, extract game data and save to games table
    # call pybaseball api
-   df = statcast_single_game(game_pk)
+   df = get_game_data(game_pk)
 
    # remember don't use if not df and use if df is None because dataframe has ambiguous boolean value
    if df is None or df.empty:
@@ -117,8 +93,9 @@ def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
       "away_team": r["away_team"],
    }
    
-   supabase.table("games").upsert(game_payload, on_conflict="game_pk").execute()
-   game_id = supabase.table("games").select("id").eq("game_pk", game_payload["game_pk"]).single().execute().data["id"]
+   upsert_game(game_payload)
+
+   game_id = get_game_id_by_pk(game_payload["game_pk"])
 
    # extract player data to upload to player table
    names = (
@@ -142,14 +119,10 @@ def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
          }
          for name in names
       ]
-      supabase.table("players").upsert(payloads, on_conflict="name").execute()
+      upsert_players(payloads)
 
       # get the player ids per player name
-      players_rows = supabase.table("players").select("id, name").in_("name", names).execute().data
-      name_to_player_id = {
-         row["name"]: row["id"]
-         for row in players_rows
-      }
+      name_to_player_id = get_player_id_map_by_names(names)
    
       
    pitches_data = []
@@ -175,14 +148,14 @@ def fetch_game_data_and_save(game_pk: int) -> FetchGameDataAndSaveResponse:
    pitch_payloads = [
       {
          "game_id": game_id,
-         "batter_id": name_to_player_id[pitch.player_name],
+         "batter_id": name_to_player_id.get(pitch.player_name),
          "pitch_type": pitch.pitch_type,
          "speed": pitch.speed,
          "description": pitch.description,
       }
       for pitch in pitches_data
    ]
-   supabase.table("pitches").upsert(pitch_payloads).execute()
+   upsert_pitches(pitch_payloads)
 
 
    return FetchGameDataAndSaveResponse(
