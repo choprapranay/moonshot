@@ -5,10 +5,13 @@ from datetime import datetime
 
 from pydantic import BaseModel
 from app.infrastructure.database.database import supabase
+from app.application.use_cases.game_operations import GameOperations
 from pybaseball import statcast_single_game
 from fastapi.responses import JSONResponse
 
 router = APIRouter()
+
+game_ops = GameOperations(supabase)
 
 class TmpItem(BaseModel):
     name: str

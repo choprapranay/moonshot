@@ -8,13 +8,21 @@ import json
 from pydantic import BaseModel
 from typing import List, Optional
 from app.infrastructure.database.database import supabase
+from app.application.use_cases.game_operations import GameOperations
 from datetime import datetime
 
 router = APIRouter()
 
+game_ops = GameOperations(supabase)
+
 @router.get("/game-data/{game_pk}")
 def get_game_data_with_db(game_pk: int):
-   return fetch_game_data_and_save(game_pk)
+   try:
+        return game_ops.fetch_game_data_and_save(game_pk)
+   except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+   except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 class GameData(BaseModel):
    game_date: datetime
