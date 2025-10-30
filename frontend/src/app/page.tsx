@@ -29,7 +29,7 @@ export default function Home() {
             backgroundColor: "#1a1c3a",
           }}
       >
-        <h1 style={{ fontSize: "3rem", fontWeight: "bold", marginBottom: "0.5rem" }}>
+        <h1 style={{ fontSize: "3rem", fontWeight: "bold", marginBottom: "0.5rem", color: "white" }}>
           moonshot
         </h1>
         <p style={{ fontStyle: "italic", color: "#ccc", marginBottom: "1.5rem" }}>
