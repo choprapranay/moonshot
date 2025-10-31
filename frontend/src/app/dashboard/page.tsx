@@ -148,7 +148,7 @@ export default function Dashboard() {
                 ))}
               </select>
             </label>
-            <button
+            {/* <button
               type="button"
               className="flex items-center gap-2 rounded-full px-4 py-2 text-sm"
               style={{ backgroundColor: "#2a2d55", color: "#d6daf6" }}
@@ -156,7 +156,7 @@ export default function Dashboard() {
               <span className="material-symbols-outlined text-base">calendar_today</span>
               <span>Last 30 Days</span>
               <span className="material-symbols-outlined text-base">expand_more</span>
-            </button>
+            </button> */}
           </div>
         </header>
 
@@ -183,7 +183,10 @@ export default function Dashboard() {
         ) : (
           <div className="flex flex-1 flex-col gap-6 lg:flex-row">
             <section className="flex flex-1 flex-col gap-6">
-              <div className="flex items-center gap-4 overflow-x-auto pb-2">
+              <div
+                className="flex items-center gap-4 overflow-x-auto overflow-y-visible py-2"
+                style={{ paddingLeft: "12px", paddingRight: "12px" }}
+              >
                 <div className="flex flex-nowrap items-center gap-4">
                   {playersForTeam.map((player) => (
                     <button
@@ -196,6 +199,7 @@ export default function Dashboard() {
                           : "hover:border-[#4a6cf7]"
                       }`}
                       style={{
+                        padding: "4px",
                         borderColor:
                           player.player_id === selectedPlayerId ? "#4a6cf7" : "transparent",
                         boxShadow:
@@ -296,24 +300,11 @@ export default function Dashboard() {
                     className="mt-auto rounded-xl p-4"
                     style={{ backgroundColor: "#1a1c3a" }}
                   >
-                    <h3 className="text-base font-semibold">Impact Zone Analysis</h3>
+                    <h3 className="text-base font-semibold">Area of Concern</h3>
                     <div className="mt-3 flex items-baseline justify-between gap-4">
-                      <span
-                        className={`text-3xl font-bold ${
-                          selectedPlayer.impact_zone_delta !== null && selectedPlayer.impact_zone_delta !== undefined
-                            ? selectedPlayer.impact_zone_delta < 0
-                              ? "text-red-400"
-                              : "text-emerald-400"
-                            : "text-slate-400"
-                        }`}
-                      >
-                        {selectedPlayer.impact_zone_delta !== null && selectedPlayer.impact_zone_delta !== undefined
-                          ? selectedPlayer.impact_zone_delta.toFixed(1)
-                          : "—"}
+                      <span className="text-3xl font-bold text-slate-400">
+                        —
                       </span>
-                      <p className="text-sm" style={{ color: "#9aa0d4" }}>
-                        Runs added (negative indicates runs lost) on swings high &amp; inside over the selected window.
-                      </p>
                     </div>
                   </div>
                 </>

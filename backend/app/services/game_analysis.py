@@ -109,22 +109,8 @@ def _compute_player_stats(group: pd.DataFrame) -> PlayerStats:
 
 
 def _calculate_impact_delta(group: pd.DataFrame, swing_mask: pd.Series) -> float | None:
-    if swing_mask is None or swing_mask.empty:
-        return None
-
-    swings = group[swing_mask]
-    if swings.empty:
-        return None
-
-    numeric_plate_x = pd.to_numeric(swings.get("plate_x"), errors="coerce")
-    numeric_plate_z = pd.to_numeric(swings.get("plate_z"), errors="coerce")
-    high_inside_mask = (numeric_plate_x <= -0.5) & (numeric_plate_z >= 3.0)
-    if not high_inside_mask.any():
-        return None
-
-    delta_series = pd.to_numeric(swings.get("delta_run_exp"), errors="coerce").fillna(0.0)
-    impact_value = float(delta_series[high_inside_mask].sum())
-    return round(impact_value, 1)
+    # Placeholder: real calculation will be implemented later
+    return None
 
 
 def _build_player_summary(group_key, group: pd.DataFrame) -> PlayerSummary:
