@@ -1,1 +1,19 @@
 @import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  font-family: var(--font-red-hat-display), "Red Hat Display", system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font-red-hat-display), "Red Hat Display", system-ui, sans-serif;
+}
+
+.material-symbols-outlined {
+  font-family: "Material Symbols Outlined";
+  font-variation-settings:
+    "FILL" 0,
+    "wght" 400,
+    "GRAD" 0,
+    "opsz" 24;
+}
