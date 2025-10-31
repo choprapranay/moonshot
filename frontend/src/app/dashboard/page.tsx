@@ -221,7 +221,7 @@ export default function Dashboard() {
                 style={{ borderColor: "#3a3e6b", backgroundColor: "#2a2d55" }}
               >
                 <span className="text-sm" style={{ color: "#9aa0d4" }}>
-                  Heatmap coming soon
+                  Heatmap
                 </span>
               </div>
             </section>
