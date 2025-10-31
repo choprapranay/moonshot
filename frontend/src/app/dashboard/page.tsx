@@ -110,7 +110,10 @@ export default function Dashboard() {
       className="min-h-screen text-white"
       style={{ backgroundColor: "#1a1c3a" }}
     >
-      <div className="mx-auto flex h-full max-w-6xl flex-col gap-6 p-6 md:p-10">
+      <div
+        className="mx-auto flex h-full max-w-7xl flex-col gap-6 px-8 py-6 md:px-12 md:py-10"
+        style={{ paddingTop: "10vh", paddingBottom: "10vh" }}
+      >
         <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
             <h1
@@ -218,7 +221,7 @@ export default function Dashboard() {
 
               <div
                 className="flex flex-1 items-center justify-center rounded-2xl border border-dashed"
-                style={{ borderColor: "#3a3e6b", backgroundColor: "#2a2d55" }}
+                style={{ borderColor: "#3a3e6b", backgroundColor: "#2a2d55", minHeight: "460px" }}
               >
                 <span className="text-sm" style={{ color: "#9aa0d4" }}>
                   Heatmap
@@ -228,7 +231,7 @@ export default function Dashboard() {
 
             <aside
               className="flex w-full flex-col gap-6 rounded-2xl p-6 lg:w-[360px]"
-              style={{ backgroundColor: "#2a2d55" }}
+              style={{ backgroundColor: "#2a2d55", minHeight: "460px" }}
             >
               {selectedPlayer ? (
                 <>
