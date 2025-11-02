@@ -1,0 +1,16 @@
+{
+  "batter": "J. Doe",
+  "zone": {
+    "x_range": [-1.0, 1.0],
+    "y_range": [0.0, 2.0]
+  },
+  "data": [
+    {"x": -0.8, "y": 1.8, "intensity": 0.2},
+    {"x": -0.4, "y": 1.5, "intensity": 0.7},
+    {"x": 0.0, "y": 1.2, "intensity": 0.9},
+    {"x": 0.4, "y": 1.0, "intensity": 0.5},
+    {"x": 0.8, "y": 0.8, "intensity": 0.3},
+    {"x": -0.6, "y": 0.6, "intensity": 0.4},
+    {"x": 0.0, "y": 0.4, "intensity": 0.1}
+  ]
+}
