@@ -43,6 +43,28 @@ sns.kdeplot(
     thresh=0.05
 )
 
+# Add colorbar legend 
+norm = plt.Normalize(vmin=min(weights), vmax=max(weights))
+sm = plt.cm.ScalarMappable(cmap=cmap, norm=norm)
+sm.set_array([])
+
+cbar = plt.colorbar(sm, ax=ax, fraction=0.046, pad=0.04)
+cbar.set_label("Pitch Frequency", color="black", fontsize=11)
+cbar.ax.yaxis.set_tick_params(color="black")
+plt.setp(plt.getp(cbar.ax.axes, "yticklabels"), color="black")
+
+cbar.set_label("Pitch Density", color="black", fontsize=11)
+
+# Add manual annotation explaining the direction of intensity
+cbar.ax.text(
+    1.5, 0.0, "Fewer pitches", color="black", fontsize=10,
+    va="bottom", ha="left", transform=cbar.ax.transAxes
+)
+cbar.ax.text(
+    1.5, 1.0, "More pitches", color="black", fontsize=10,
+    va="top", ha="left", transform=cbar.ax.transAxes
+)
+
 # Overlay pitch dots
 plt.scatter(
     pitch_x,
