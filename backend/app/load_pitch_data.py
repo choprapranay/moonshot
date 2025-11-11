@@ -8,7 +8,7 @@ def load_pitch_data(start_date: str, end_date: str):
     clean = CleaningService.fix_na(raw)
 
     repo = SupabaseRepository()
-    repo.insert_pitch_data_rows("statcast_raw", clean.to_dict(orient='records'))
+    repo.insert_pitch_data_rows("pitch_data_raw", clean.to_dict(orient='records'))
 
     print(f"ETL COMPLETE — inserted {len(clean)} rows")
 
