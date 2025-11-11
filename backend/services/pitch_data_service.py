@@ -9,9 +9,9 @@ COLUMNS = ['game_date', 'batter', 'pitch_type', 'description', 'plate_x', 'plate
            'estimated_ba_using_speedangle', 'launch_speed_angle']
 
 
-class StatcastService:
+class PitchDataService:
 
     @staticmethod
-    def get_statcast(start_date: str, end_date: str) -> pd.DataFrame:
+    def get_pitch_data(start_date: str, end_date: str) -> pd.DataFrame:
         raw = statcast(start_dt=start_date, end_dt=end_date)
         return raw[COLUMNS].copy()
