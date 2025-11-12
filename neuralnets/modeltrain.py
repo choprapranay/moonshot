@@ -109,7 +109,6 @@ def decode_probable(probable_list, batter_enc, pitch_enc):
     return decoded
 
 def main():
-    # Parse command line arguments
     parser = argparse.ArgumentParser(description='Train batter outcome prediction model')
     parser.add_argument('--epochs', type=int, default=20, help='Number of training epochs (default: 20)')
     parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate (default: 0.0001)')  # Lower default LR
@@ -124,16 +123,13 @@ def main():
     print(f"  Batch size: {args.batch_size}")
     print(f"  Save path: {args.save_path}")
     
-    # Load data
     print("\nLoading data...")
     batter_info = pybaseball.statcast('2025-10-01', '2025-10-15')
     
-    # Select columns
     shortened_data = batter_info[['batter', 'pitch_type', 'description', 'plate_x', 'plate_z', 'events', 'release_speed', 'release_pos_x', 'launch_speed', 'launch_angle', 'effective_speed', 'release_spin_rate', 'release_extension', 'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0', 'ax', 'ay', 'az', 'sz_top', 'sz_bot', 'estimated_ba_using_speedangle', 'launch_speed_angle']]
     pruned_data = shortened_data
     print(f"Data shape: {pruned_data.shape}")
     
-    # Handle missing values
     both_na = pruned_data['hc_x'].isna() & pruned_data['hc_y'].isna()
     both_na_2 = pruned_data['launch_speed'].isna() & pruned_data['launch_angle'].isna()
     both_na_3 = pruned_data['launch_speed_angle'].isna() & pruned_data['estimated_ba_using_speedangle'].isna()
@@ -150,11 +146,9 @@ def main():
 
     pruned_data = pruned_data.dropna(subset=['outcome_text'])
     
-    # Apply swing type classification
     pruned_data['batting_pattern'] = pruned_data['outcome_text'].apply(swing_type)
     pruned_data = pruned_data.dropna(subset=['batting_pattern'])
     
-    # **FIX: Drop rows with ANY remaining NaN values before scaling**
     feature_cols = ['release_speed', 'release_pos_x', 'plate_x', 'plate_z', 'launch_speed', 
                     'launch_angle', 'effective_speed', 'release_spin_rate', 'release_extension', 
                     'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0', 'ax', 'ay', 'az', 'estimated_ba_using_speedangle']
@@ -166,7 +160,6 @@ def main():
     pruned_data = pruned_data.dropna(subset=feature_cols)
     print(f"Rows after NaN removal: {len(pruned_data)}")
     
-    # Encode categorical variables
     batter_enc = LabelEncoder() 
     pruned_data['batter_id'] = batter_enc.fit_transform(pruned_data['batter'])
     pitch_enc = LabelEncoder()
@@ -184,11 +177,9 @@ def main():
     NUM_BATTER_PATTERNS = pruned_data['batting_pattern_id'].nunique()
     NUM_LAUNCH_SPEED_ANGLE = pruned_data['launch_speed_angle_id'].nunique()
 
-    # Scale features
     scaler = StandardScaler()
     pruned_data[feature_cols] = scaler.fit_transform(pruned_data[feature_cols].astype(float))
     
-    # **FIX: Check for inf/nan after scaling**
     print("\nChecking for inf/nan after scaling:")
     inf_count = np.isinf(pruned_data[feature_cols]).sum().sum()
     nan_count = np.isnan(pruned_data[feature_cols]).sum().sum()
@@ -208,7 +199,6 @@ def main():
     print(f"Number of pitch types: {NUM_PITCHES}")
     print(f"Number of batter patterns: {NUM_BATTER_PATTERNS}")
     
-    # Create datasets
     train_df, test_df = train_test_split(pruned_data, test_size=0.2, random_state=42)
     
     train_dataset = SuperDataSet(train_df)
@@ -220,7 +210,6 @@ def main():
     train_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=args.batch_size, shuffle=False)
     
-    # Initialize model
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     print(f"\nUsing device: {device}")
     
@@ -228,10 +217,8 @@ def main():
     loss_fn = nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model_t.parameters(), lr=args.lr)
     
-    # **FIX: Add gradient clipping**
     print(f"\nModel architecture:\n{model_t}")
     
-    # Training loop
     print("\nStarting training...")
     for epoch in range(args.epochs):
         model_t.train()
@@ -253,7 +240,6 @@ def main():
             optimizer.zero_grad()
             loss_value.backward()
             
-            # **FIX: Gradient clipping**
             torch.nn.utils.clip_grad_norm_(model_t.parameters(), max_norm=1.0)
             
             optimizer.step()
@@ -267,20 +253,17 @@ def main():
             
         avg_loss = epoch_loss / batch_count
         
-        # Calculate accuracy on training and test sets
         train_accuracy = calculate_accuracy(model_t, train_loader, device)
         test_accuracy = calculate_accuracy(model_t, test_loader, device)
         
         print(f"Epoch {epoch+1}/{args.epochs}, Loss: {avg_loss:.4f}, Train Acc: {train_accuracy:.4f}, Test Acc: {test_accuracy:.4f}")
     
-    # Final evaluation
     print("\nFinal Evaluation:")
     final_train_accuracy = calculate_accuracy(model_t, train_loader, device)
     final_test_accuracy = calculate_accuracy(model_t, test_loader, device)
     print(f"Final Train Accuracy: {final_train_accuracy:.4f} ({final_train_accuracy*100:.2f}%)")
     print(f"Final Test Accuracy: {final_test_accuracy:.4f} ({final_test_accuracy*100:.2f}%)")
     
-    # Evaluation with probabilities
     print("\nGenerating predictions...")
     model_t.eval()
     all_predictions = []
@@ -316,9 +299,22 @@ def main():
     print("\nSample decoded predictions:")
     for pred in decoded_probable[:5]:
         print(f"  Batter: {pred['batter']}, Pitch: {pred['pitch_type']}, Outcome: {pred['outcome']}, Confidence: {pred['confidence']:.4f}")
+
+    save_dict = {
+        'model_state_dict': model_t.state_dict(),
+        'batter_encoder': batter_enc,
+        'pitch_encoder': pitch_enc,
+        'outcome_encoder': outcome_enc,
+        'batter_pattern_encoder': batter_pattern_enc,
+        'launch_speed_angle_encoder': launch_speed_angle_enc,
+        'scaler': scaler,
+        'num_batters': NUM_BATTERS,
+        'num_pitches': NUM_PITCHES,
+        'num_outcomes': NUM_OUTCOMES,
+        'labels': labels
+    }
     
-    # Save model
-    torch.save(model_t.state_dict(), args.save_path)
+    torch.save(save_dict, args.save_path)
     print(f"\nModel saved as '{args.save_path}'")
 
 
