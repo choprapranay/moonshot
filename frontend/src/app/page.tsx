@@ -1,21 +1,17 @@
 
 "use client";
 
-import { useState } from "react";
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
+  const router = useRouter();
   const [gameId, setGameId] = useState("");
-  const [data, setData] = useState<any[] | null>(null);
 
-  const fetchData = async () => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!gameId) return;
-    try {
-      const res = await fetch(`http://127.0.0.1:8000/game/${gameId}`);
-      const json = await res.json();
-      setData(json);
-    } catch (err) {
-      console.error(err);
-    }
+    router.push(`/dashboard?gameId=${gameId}`);
   };
 
   return (
@@ -29,14 +25,14 @@ export default function Home() {
             backgroundColor: "#1a1c3a",
           }}
       >
-        <h1 style={{ fontSize: "3rem", fontWeight: "bold", marginBottom: "0.5rem" }}>
+        <h1 style={{ fontSize: "3rem", fontWeight: "bold", marginBottom: "0.5rem", color: "white" }}>
           moonshot
         </h1>
         <p style={{ fontStyle: "italic", color: "#ccc", marginBottom: "1.5rem" }}>
           Enter Game ID
         </p>
-
-        <div
+        <form
+            onSubmit={handleSubmit}
             style={{
               display: "flex",
               alignItems: "center",
@@ -62,7 +58,7 @@ export default function Home() {
               }}
           />
           <button
-              onClick={fetchData}
+              type="submit"
               style={{
                 backgroundColor: "#4a6cf7",
                 border: "none",
@@ -78,43 +74,7 @@ export default function Home() {
           >
             &#10140;
           </button>
-        </div>
-
-          {data && (
-              <div
-                  style={{
-                      marginTop: "2rem",
-                      width: "80%",
-                      maxWidth: "600px",
-                      backgroundColor: "#2a2d55",
-                      padding: "1.5rem",
-                      borderRadius: "12px",
-                      color: "white",
-                      fontSize: "1rem",
-                      textAlign: "left",
-                  }}
-              >
-                  <h2 style={{ marginBottom: "1rem", color: "#4a90e2" }}>
-                      Pitch Details
-                  </h2>
-                  {data.slice(0, 5).map((row: any, i: number) => (
-                      <div
-                          key={i}
-                          style={{
-                              marginBottom: "1rem",
-                              paddingBottom: "0.8rem",
-                              borderBottom: "1px solid #444",
-                          }}
-                      >
-                          <p><strong>Batter:</strong> {row.player_name}</p>
-                          <p><strong>Pitch Type:</strong> {row.pitch_type}</p>
-                          <p><strong>Speed:</strong> {row.release_speed} mph</p>
-                          <p><strong>Description:</strong> {row.des}</p>
-                          <p><strong>Zone:</strong> {row.zone}</p>
-                      </div>
-                  ))}
-              </div>
-          )}
+        </form>
       </div>
   );
 }
