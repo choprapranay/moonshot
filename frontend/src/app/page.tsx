@@ -44,7 +44,7 @@ export default function Home() {
                 placeholder="Game ID..."
                 value={gameId}
                 onChange={(e) => setGameId(e.target.value)}
-                className="flex-1 bg-transparent px-2 py-3 text-lg text-white placeholder-white/40 focus:outline-none"
+                className="flex-1 bg-transparent px-2 py-3 text-lg text-white placeholder-white/40 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <button
                 type="submit"

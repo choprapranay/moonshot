@@ -98,13 +98,13 @@ def _compute_player_stats(group: pd.DataFrame) -> PlayerStats:
     average_velocity = group.get("release_speed").dropna().astype(float).mean()
     avg_velocity_value = float(round(average_velocity, 1)) if pd.notnull(average_velocity) else None
 
-    # Get most common pitcher handedness
-    p_throws_series = group.get("p_throws", pd.Series(dtype=str))
-    pitcher_handedness = None
-    if not p_throws_series.empty and p_throws_series.notna().any():
-        most_common = p_throws_series.dropna().mode()
+    # Get batter handedness (should be consistent for a single batter)
+    stand_series = group.get("stand", pd.Series(dtype=str))
+    batter_handedness = None
+    if not stand_series.empty and stand_series.notna().any():
+        most_common = stand_series.dropna().mode()
         if not most_common.empty:
-            pitcher_handedness = str(most_common.iloc[0]).upper()
+            batter_handedness = str(most_common.iloc[0]).upper()
 
     return PlayerStats(
         pitches_seen=int(total_pitches),
@@ -113,7 +113,7 @@ def _compute_player_stats(group: pd.DataFrame) -> PlayerStats:
         whiff_percentage=round(whiff_pct * 100, 1),
         contact_percentage=round(contact_pct * 100, 1),
         average_velocity=avg_velocity_value,
-        pitcher_handedness=pitcher_handedness,
+        batter_handedness=batter_handedness,
     )
 
 

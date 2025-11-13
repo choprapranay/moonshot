@@ -17,7 +17,7 @@ class PlayerStats(BaseModel):
     whiff_percentage: float
     contact_percentage: float
     average_velocity: Optional[float]
-    pitcher_handedness: Optional[str]
+    batter_handedness: Optional[str]
 
 
 class PlayerSummary(BaseModel):
