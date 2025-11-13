@@ -184,3 +184,44 @@ def build_pitch_records(game_pk: int) -> List[dict]:
     records = json.loads(normalized_df.to_json(orient="records"))
     return records
 
+
+def get_batter_swings(game_pk: int, batter_id: int) -> List[dict]:
+    df = _fetch_game_dataframe(game_pk)
+    normalized_df = _normalize_dataframe(df)
+    batter_rows = normalized_df[
+        (normalized_df["batter_id"] == batter_id)
+        & normalized_df["plate_x"].notnull()
+        & normalized_df["plate_z"].notnull()
+    ]
+
+    if batter_rows.empty:
+        return []
+
+    description_series = batter_rows.get("description", pd.Series(dtype=str)).astype(str)
+    pitch_type_series = batter_rows.get("type", pd.Series(dtype=str)).astype(str)
+
+    swing_mask = (
+        (
+            pitch_type_series.str.upper().isin(["S", "X"])
+            & ~description_series.str.contains("called|blocked_ball", case=False, na=False)
+        )
+        | description_series.str.contains("swing|foul|in_play", case=False, na=False)
+    )
+
+    swings = batter_rows[swing_mask]
+    if swings.empty:
+        return []
+
+    swing_dicts = []
+    for _, row in swings.iterrows():
+        swing_dicts.append(
+            {
+                "plate_x": float(row["plate_x"]),
+                "plate_z": float(row["plate_z"]),
+                "pitch_type": row.get("pitch_type"),
+                "description": row.get("description"),
+            }
+        )
+
+    return swing_dicts
+
