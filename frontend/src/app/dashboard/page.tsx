@@ -176,13 +176,13 @@ export default function Dashboard() {
       style={{ backgroundColor: "#07090f" }}
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.32]"
+        className="pointer-events-none absolute inset-0 opacity-[0.44]"
         style={{
           backgroundImage:
-            "radial-gradient(at 24% 18%, hsla(212, 95%, 34%, 0.38) 0px, transparent 55%), radial-gradient(at 78% 18%, hsla(340, 90%, 37%, 0.32) 0px, transparent 55%), radial-gradient(at 50% 82%, hsla(240, 82%, 38%, 0.34) 0px, transparent 60%)",
+            "radial-gradient(at 24% 18%, hsla(212, 95%, 32%, 0.35) 0px, transparent 55%), radial-gradient(at 78% 18%, hsla(340, 90%, 37%, 0.32) 0px, transparent 55%), radial-gradient(at 50% 82%, hsla(240, 82%, 38%, 0.34) 0px, transparent 60%)",
         }}
       />
-      <div className="absolute inset-0 pointer-events-none backdrop-blur-[28px] opacity-75" />
+      <div className="absolute inset-0 pointer-events-none backdrop-blur-[28px] opacity-85" />
 
       <div
         className="relative z-10 mx-auto flex h-full max-w-7xl flex-col gap-6 px-8 py-6 md:px-12 md:py-10"
