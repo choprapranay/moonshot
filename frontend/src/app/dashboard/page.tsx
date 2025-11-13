@@ -172,11 +172,20 @@ export default function Dashboard() {
 
   return (
     <div
-      className="min-h-screen text-white"
-      style={{ backgroundColor: "#1a1c3a" }}
+      className="relative min-h-screen overflow-hidden text-white"
+      style={{ backgroundColor: "#07090f" }}
     >
       <div
-        className="mx-auto flex h-full max-w-7xl flex-col gap-6 px-8 py-6 md:px-12 md:py-10"
+        className="pointer-events-none absolute inset-0 opacity-[0.32]"
+        style={{
+          backgroundImage:
+            "radial-gradient(at 24% 18%, hsla(212, 95%, 34%, 0.38) 0px, transparent 55%), radial-gradient(at 78% 18%, hsla(340, 90%, 37%, 0.32) 0px, transparent 55%), radial-gradient(at 50% 82%, hsla(240, 82%, 38%, 0.34) 0px, transparent 60%)",
+        }}
+      />
+      <div className="absolute inset-0 pointer-events-none backdrop-blur-[28px] opacity-75" />
+
+      <div
+        className="relative z-10 mx-auto flex h-full max-w-7xl flex-col gap-6 px-8 py-6 md:px-12 md:py-10"
         style={{ paddingTop: "10vh", paddingBottom: "10vh" }}
       >
         <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
@@ -194,7 +203,13 @@ export default function Dashboard() {
           <div className="flex items-center gap-3">
             <label
               className="flex items-center gap-2 rounded-full px-4 py-2 text-sm"
-              style={{ backgroundColor: "#2a2d55", color: "#d6daf6" }}
+               style={{
+                 color: "#d6daf6",
+                 background: "rgba(7, 10, 22, 0.52)",
+                 boxShadow: "0 14px 32px rgba(3, 5, 12, 0.6)",
+                 backdropFilter: "blur(26px) saturate(140%)",
+                 WebkitBackdropFilter: "blur(26px) saturate(140%)",
+               }}
             >
               <span className="hidden text-xs uppercase tracking-wide md:inline" style={{ color: "#8d92c2" }}>
                 Team
@@ -239,11 +254,26 @@ export default function Dashboard() {
         )}
 
         {loading ? (
-          <div
-            className="flex flex-1 items-center justify-center rounded-2xl border border-dashed"
-            style={{ borderColor: "#3a3e6b", backgroundColor: "#2a2d55" }}
+           <div
+            className="relative flex flex-1 items-center justify-center overflow-hidden rounded-2xl"
+            style={{
+              background: "rgba(3, 5, 15, 0.56)",
+              boxShadow: "0 26px 70px rgba(4, 6, 14, 0.7)",
+              backdropFilter: "blur(34px) saturate(135%)",
+              WebkitBackdropFilter: "blur(34px) saturate(135%)",
+            }}
           >
-            <p style={{ color: "#d6daf6" }}>Loading dashboard…</p>
+            <div
+              className="pointer-events-none absolute inset-0 rounded-2xl"
+              style={{
+                background:
+                  "linear-gradient(135deg, rgba(102, 186, 255, 0.28) 0%, rgba(236, 132, 205, 0.18) 45%, rgba(98, 158, 255, 0.22) 100%)",
+                opacity: 0.28,
+              }}
+            />
+            <div className="relative z-10">
+              <p style={{ color: "#d6daf6" }}>Loading dashboard…</p>
+            </div>
           </div>
         ) : (
           <div className="flex flex-1 flex-col gap-6 lg:flex-row">
@@ -289,29 +319,62 @@ export default function Dashboard() {
               </div>
 
               <div
-                className="flex flex-1 items-center justify-center rounded-2xl border border-dashed"
-                style={{ borderColor: "#3a3e6b", backgroundColor: "#2a2d55", minHeight: "460px" }}
+                className="relative flex flex-1 items-center justify-center overflow-hidden rounded-2xl"
+                style={{
+                  background: "rgba(3, 5, 15, 0.58)",
+                  boxShadow: "0 28px 70px rgba(3, 5, 12, 0.78)",
+                  backdropFilter: "blur(40px) saturate(135%)",
+                  WebkitBackdropFilter: "blur(40px) saturate(135%)",
+                  minHeight: "460px",
+                }}
               >
-                {heatmapLoading ? (
-                  <span className="text-sm" style={{ color: "#9aa0d4" }}>
-                    Loading strike zone…
-                  </span>
-                ) : heatmapError ? (
-                  <span className="text-sm text-red-300">{heatmapError}</span>
-                ) : heatmapData.length ? (
-                  <StrikeZoneHeatmap heatmap={heatmapData} swings={swingData} />
-                ) : (
-                  <span className="text-sm" style={{ color: "#9aa0d4" }}>
-                    No heatmap data available.
-                  </span>
-                )}
+                <div
+                  className="pointer-events-none absolute inset-0 rounded-2xl"
+                  style={{
+                    background:
+                      "linear-gradient(140deg, rgba(102, 186, 255, 0.28) 0%, rgba(236, 132, 205, 0.18) 42%, rgba(98, 158, 255, 0.24) 100%)",
+                    opacity: 0.32,
+                    mixBlendMode: "screen",
+                  }}
+                />
+                <div className="relative z-10 flex h-full w-full items-center justify-center">
+                  {heatmapLoading ? (
+                    <span className="text-sm" style={{ color: "#9aa0d4" }}>
+                      Loading strike zone…
+                    </span>
+                  ) : heatmapError ? (
+                    <span className="text-sm text-red-300">{heatmapError}</span>
+                  ) : heatmapData.length ? (
+                    <StrikeZoneHeatmap heatmap={heatmapData} swings={swingData} />
+                  ) : (
+                    <span className="text-sm" style={{ color: "#9aa0d4" }}>
+                      No heatmap data available.
+                    </span>
+                  )}
+                </div>
               </div>
             </section>
 
             <aside
-              className="flex w-full flex-col gap-6 rounded-2xl p-6 lg:w-[360px]"
-              style={{ backgroundColor: "#2a2d55", minHeight: "460px" }}
+              className="relative flex w-full flex-col gap-6 overflow-hidden rounded-2xl p-6 lg:w-[360px]"
+              style={{
+                background: "rgba(4, 6, 18, 0.56)",
+                boxShadow: "0 32px 82px rgba(3, 5, 12, 0.78)",
+                backdropFilter: "blur(44px) saturate(140%)",
+                WebkitBackdropFilter: "blur(44px) saturate(140%)",
+                minHeight: "460px",
+              }}
             >
+              <div
+                className="pointer-events-none absolute inset-0 rounded-2xl"
+                style={{
+                  background:
+                    "linear-gradient(145deg, rgba(102, 186, 255, 0.28) 0%, rgba(236, 132, 205, 0.18) 45%, rgba(98, 158, 255, 0.22) 100%)",
+                  opacity: 0.28,
+                  mixBlendMode: "screen",
+                }}
+              />
+              <div className="relative z-10 flex h-full flex-col gap-6">
               {selectedPlayer ? (
                 <>
                   <div className="flex items-center gap-4">
@@ -372,9 +435,14 @@ export default function Dashboard() {
                   </dl>
 
                   <div
-                    className="mt-auto rounded-xl p-4"
-                    style={{ backgroundColor: "#1a1c3a" }}
-                  >
+                     className="mt-auto rounded-xl p-4"
+                     style={{
+                       background: "rgba(4, 7, 18, 0.5)",
+                       boxShadow: "0 18px 44px rgba(2, 4, 10, 0.64)",
+                       backdropFilter: "blur(36px) saturate(145%)",
+                       WebkitBackdropFilter: "blur(36px) saturate(145%)",
+                     }}
+                   >
                     <h3 className="text-base font-semibold">Area of Concern</h3>
                     <div className="mt-3 flex items-baseline justify-between gap-4">
                       <span className="text-3xl font-bold text-slate-400">
@@ -388,6 +456,7 @@ export default function Dashboard() {
                   Select a player to see detailed metrics.
                 </div>
               )}
+              </div>
             </aside>
           </div>
         )}
