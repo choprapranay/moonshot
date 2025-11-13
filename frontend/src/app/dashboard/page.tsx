@@ -16,6 +16,7 @@ type PlayerStats = {
   whiff_percentage: number;
   contact_percentage: number;
   average_velocity: number | null;
+  pitcher_handedness?: string | null;
 };
 
 type PlayerSummary = {
@@ -465,6 +466,18 @@ export default function Dashboard() {
                         Contact %
                       </dt>
                       <dd className="text-xl font-semibold">{selectedPlayer.stats.contact_percentage.toFixed(1)}%</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs uppercase tracking-wide" style={{ color: "#9aa0d4" }}>
+                        Pitcher Hand
+                      </dt>
+                      <dd className="text-xl font-semibold">
+                        {selectedPlayer.stats.pitcher_handedness === "L"
+                          ? "Left"
+                          : selectedPlayer.stats.pitcher_handedness === "R"
+                          ? "Right"
+                          : "—"}
+                      </dd>
                     </div>
                   </dl>
 
