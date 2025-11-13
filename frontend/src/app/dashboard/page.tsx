@@ -77,6 +77,7 @@ export default function Dashboard() {
   const [swingData, setSwingData] = useState<SwingPoint[]>([]);
   const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [heatmapError, setHeatmapError] = useState<string | null>(null);
+  const [selectedSwingIndex, setSelectedSwingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!gameIdParam) {
@@ -151,6 +152,7 @@ export default function Dashboard() {
       .then((payload) => {
         setHeatmapData(payload.heatmap ?? []);
         setSwingData(payload.swings ?? []);
+        setSelectedSwingIndex(null);
       })
       .catch((err: unknown) => {
         if (abort.signal.aborted) return;
@@ -345,7 +347,12 @@ export default function Dashboard() {
                   ) : heatmapError ? (
                     <span className="text-sm text-red-300">{heatmapError}</span>
                   ) : heatmapData.length ? (
-                    <StrikeZoneHeatmap heatmap={heatmapData} swings={swingData} />
+                    <StrikeZoneHeatmap 
+                      heatmap={heatmapData} 
+                      swings={swingData}
+                      onSwingClick={(swing, index) => setSelectedSwingIndex(index)}
+                      selectedSwingIndex={selectedSwingIndex}
+                    />
                   ) : (
                     <span className="text-sm" style={{ color: "#9aa0d4" }}>
                       No heatmap data available.
@@ -443,12 +450,31 @@ export default function Dashboard() {
                        WebkitBackdropFilter: "blur(36px) saturate(145%)",
                      }}
                    >
-                    <h3 className="text-base font-semibold">Area of Concern</h3>
-                    <div className="mt-3 flex items-baseline justify-between gap-4">
-                      <span className="text-3xl font-bold text-slate-400">
-                        —
-                      </span>
-                    </div>
+                    <h3 className="text-base font-semibold text-white">Swing Details</h3>
+                    {selectedSwingIndex !== null && swingData[selectedSwingIndex] ? (
+                      <div className="mt-3 space-y-3">
+                        <div>
+                          <dt className="text-xs uppercase tracking-wide" style={{ color: "#9aa0d4" }}>
+                            Pitch Type
+                          </dt>
+                          <dd className="mt-1 text-lg font-semibold text-white">
+                            {swingData[selectedSwingIndex].pitch_type || "—"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs uppercase tracking-wide" style={{ color: "#9aa0d4" }}>
+                            Description
+                          </dt>
+                          <dd className="mt-1 text-lg font-semibold text-white">
+                            {swingData[selectedSwingIndex].description || "—"}
+                          </dd>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 text-sm" style={{ color: "#9aa0d4" }}>
+                        Click on a swing dot to see details
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
