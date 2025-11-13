@@ -55,6 +55,33 @@ type PlayerHeatmapResponse = {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 const FALLBACK_HEADSHOT = "https://via.placeholder.com/80x80?text=?";
 
+const PITCH_TYPE_NAMES: Record<string, string> = {
+  FF: "Four-seam Fastball",
+  FT: "Two-seam Fastball",
+  FC: "Cutter",
+  SI: "Sinker",
+  SL: "Slider",
+  CH: "Changeup",
+  CU: "Curveball",
+  KC: "Knuckle Curve",
+  KN: "Knuckleball",
+  SC: "Screwball",
+  FO: "Forkball",
+  PO: "Pitch Out",
+  FS: "Split-finger Fastball",
+  ST: "Sweeper",
+  SV: "Slurve",
+  FA: "Fastball",
+  EP: "Eephus",
+  IN: "Intentional Ball",
+  UN: "Unknown",
+};
+
+function getPitchTypeName(abbreviation: string | null | undefined): string {
+  if (!abbreviation) return "—";
+  return PITCH_TYPE_NAMES[abbreviation.toUpperCase()] || abbreviation;
+}
+
 async function fetchGameAnalysis(gameId: string): Promise<GameAnalysisResponse> {
   const response = await fetch(`${API_BASE_URL}/game/${gameId}/analysis`);
   if (!response.ok) {
@@ -458,7 +485,7 @@ export default function Dashboard() {
                             Pitch Type
                           </dt>
                           <dd className="mt-1 text-lg font-semibold text-white">
-                            {swingData[selectedSwingIndex].pitch_type || "—"}
+                            {getPitchTypeName(swingData[selectedSwingIndex].pitch_type)}
                           </dd>
                         </div>
                         <div>
