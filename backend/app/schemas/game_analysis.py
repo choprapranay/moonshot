@@ -34,3 +34,21 @@ class GameAnalysisResponse(BaseModel):
     teams: List[TeamInfo]
     players: List[PlayerSummary]
 
+
+class HeatmapPoint(BaseModel):
+    plate_x: float
+    plate_z: float
+    expected_value_diff: float
+
+
+class SwingPoint(BaseModel):
+    plate_x: float
+    plate_z: float
+    pitch_type: Optional[str]
+    description: Optional[str]
+
+
+class PlayerHeatmapResponse(BaseModel):
+    heatmap: List[HeatmapPoint]
+    swings: List[SwingPoint]
+

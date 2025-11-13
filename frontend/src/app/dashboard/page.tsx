@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { StrikeZoneHeatmap } from "@/components/StrikeZoneHeatmap";
 
 type TeamInfo = {
   code: string;
@@ -33,6 +34,24 @@ type GameAnalysisResponse = {
   players: PlayerSummary[];
 };
 
+type HeatmapPoint = {
+  plate_x: number;
+  plate_z: number;
+  expected_value_diff: number;
+};
+
+type SwingPoint = {
+  plate_x: number;
+  plate_z: number;
+  pitch_type?: string | null;
+  description?: string | null;
+};
+
+type PlayerHeatmapResponse = {
+  heatmap: HeatmapPoint[];
+  swings: SwingPoint[];
+};
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 const FALLBACK_HEADSHOT = "https://via.placeholder.com/80x80?text=?";
 
@@ -54,6 +73,10 @@ export default function Dashboard() {
   const [selectedPlayerId, setSelectedPlayerId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [heatmapData, setHeatmapData] = useState<HeatmapPoint[]>([]);
+  const [swingData, setSwingData] = useState<SwingPoint[]>([]);
+  const [heatmapLoading, setHeatmapLoading] = useState(false);
+  const [heatmapError, setHeatmapError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!gameIdParam) {
@@ -104,6 +127,48 @@ export default function Dashboard() {
     }
     return playersForTeam.find((player) => player.player_id === selectedPlayerId) ?? playersForTeam[0];
   }, [playersForTeam, selectedPlayerId]);
+
+  useEffect(() => {
+    if (!gameIdParam || !selectedPlayerId) {
+      setHeatmapData([]);
+      setSwingData([]);
+      return;
+    }
+
+    const abort = new AbortController();
+    setHeatmapLoading(true);
+    setHeatmapError(null);
+
+    fetch(`${API_BASE_URL}/game/${gameIdParam}/player/${selectedPlayerId}/heatmap`, {
+      signal: abort.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          throw new Error(await response.text());
+        }
+        return response.json() as Promise<PlayerHeatmapResponse>;
+      })
+      .then((payload) => {
+        setHeatmapData(payload.heatmap ?? []);
+        setSwingData(payload.swings ?? []);
+      })
+      .catch((err: unknown) => {
+        if (abort.signal.aborted) return;
+        const message = err instanceof Error ? err.message : "Unable to load heatmap";
+        setHeatmapError(message);
+        setHeatmapData([]);
+        setSwingData([]);
+      })
+      .finally(() => {
+        if (!abort.signal.aborted) {
+          setHeatmapLoading(false);
+        }
+      });
+
+    return () => {
+      abort.abort();
+    };
+  }, [gameIdParam, selectedPlayerId]);
 
   return (
     <div
@@ -227,9 +292,19 @@ export default function Dashboard() {
                 className="flex flex-1 items-center justify-center rounded-2xl border border-dashed"
                 style={{ borderColor: "#3a3e6b", backgroundColor: "#2a2d55", minHeight: "460px" }}
               >
-                <span className="text-sm" style={{ color: "#9aa0d4" }}>
-                  Heatmap
-                </span>
+                {heatmapLoading ? (
+                  <span className="text-sm" style={{ color: "#9aa0d4" }}>
+                    Loading strike zone…
+                  </span>
+                ) : heatmapError ? (
+                  <span className="text-sm text-red-300">{heatmapError}</span>
+                ) : heatmapData.length ? (
+                  <StrikeZoneHeatmap heatmap={heatmapData} swings={swingData} />
+                ) : (
+                  <span className="text-sm" style={{ color: "#9aa0d4" }}>
+                    No heatmap data available.
+                  </span>
+                )}
               </div>
             </section>
 
