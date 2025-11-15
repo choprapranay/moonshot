@@ -1,18 +1,52 @@
 from services.pitch_data_service import PitchDataService
 from services.cleaning_service import CleaningService
 from infrastructure.supabase_repository import SupabaseRepository
+import time
+
+BATCH_SIZE = 500
+RETRY_LIMIT = 3
+
+def batch_insert(repo, table, rows):
+    """
+    Inserts rows in batches to avoid memory overload and API limits.
+    """
+    for i in range(0, len(rows), BATCH_SIZE):
+        batch = rows[i:i + BATCH_SIZE]
+
+        attempts = 0
+        while attempts < RETRY_LIMIT:
+            try:
+                repo.insert_pitch_data_rows(table, batch)
+                break
+            except Exception as e:
+                attempts += 1
+                print(f"Batch insert failed (attempt {attempts}/{RETRY_LIMIT}): {e}")
+                time.sleep(1.5)
+
+        if attempts == RETRY_LIMIT:
+            print("Failed to insert batch after 3 retries. Skipping batch.")
 
 def load_pitch_data(start_date: str, end_date: str):
 
+
+    print(f"\nExtracting {start_date} → {end_date} ...")
+
     raw = PitchDataService.get_pitch_data(start_date, end_date)
     clean = CleaningService.fix_na(raw)
+    rows = clean.to_dict(orient='records')
+
+    if not rows:
+        print("No valid rows found after cleaning.")
+        return
 
     repo = SupabaseRepository()
-    repo.insert_pitch_data_rows("pitch_data_raw", clean.to_dict(orient='records'))
+    print(f"Uploading {len(rows)} rows in batches of {BATCH_SIZE}...")
 
-    print(f"ETL COMPLETE — inserted {len(clean)} rows")
+    batch_insert(repo, "pitch_data_raw", rows)
+
+    print(f"COMPLETED — inserted ~{len(rows)} rows for {start_date}")
 
 
 if __name__ == "__main__":
-    # test run
+    # test load
     load_pitch_data("2025-10-14", "2025-10-15")

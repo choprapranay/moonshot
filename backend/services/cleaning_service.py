@@ -5,6 +5,10 @@ from services.labeling_service import LabelingService
 class CleaningService:
     @staticmethod
     def fix_na(df: pd.DataFrame) -> pd.DataFrame:
+
+        # Account for Duplicated Columns (bug fix for loading data)
+        df = df.loc[:, ~df.columns.duplicated()].copy()
+
         # Cleaning NA
         both_na = df['hc_x'].isna() & df['hc_y'].isna()
         both_na_2 = df['launch_speed'].isna() & df['launch_angle'].isna()
