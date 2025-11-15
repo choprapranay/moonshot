@@ -6,7 +6,7 @@ COLUMNS = ['game_date', 'batter', 'pitch_type', 'description', 'plate_x', 'plate
            'effective_speed', 'release_spin_rate', 'release_extension',
            'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0',
            'ax', 'ay', 'az', 'sz_top', 'sz_bot',
-           'estimated_ba_using_speedangle', 'launch_speed_angle']
+           'estimated_ba_using_speedangle', 'launch_speed_angle', 'events', 'description']
 
 
 class PitchDataService:

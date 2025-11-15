@@ -14,6 +14,11 @@ class CleaningService:
         df.loc[both_na_2, ['launch_speed', 'launch_angle']] = 0
         df.loc[both_na_3, ['launch_speed_angle', 'estimated_ba_using_speedangle']] = 0
 
+        # Create outcome_text column
+        df['outcome_text'] = df['description'].fillna(df['events'])
+        # Applying Labeling Service
+        df['swing_take'] = df['outcome_text'].apply(LabelingService.swing_type)
+
         # Replace infinite values with 0 (Supabase/JSON can't handle inf)
         df = df.replace([np.inf, -np.inf], 0)
 
@@ -24,8 +29,5 @@ class CleaningService:
         for col in df.columns:
             if pd.api.types.is_datetime64_any_dtype(df[col]):
                 df[col] = df[col].astype(str)
-
-        # Applying Labeling Service
-        df['swing_take'] = df['outcome_text'].apply(LabelingService.swing_type)
 
         return df
