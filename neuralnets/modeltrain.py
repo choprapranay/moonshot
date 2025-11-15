@@ -8,22 +8,25 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 import argparse
 
+from services.dataset_loader_service import DatasetLoaderService
 
-def swing_type(outcome_text):
-    out_text = outcome_text.lower()
-    swing_pattern = [r'field_out', r'single', r'double', r'triple',
-                     r'home_run', r'grounded_into_double_play', r'force_out', 
-                     r'sac_fly', r'field_error', r'fielders_choice', r'fielders_choice_out',
-                     r'double_play', r'triple_play', r'swinging_strike', r'foul', r'foul_tip', r'swinging_strike_blocked']
-    take_pattern = [r'ball', r'walk', r'hit_by_pitch', r'called_strike', r'called_strike', r'blocked_ball'] 
 
-    for p in swing_pattern:
-        if p in out_text:
-            return 1
-    for p in take_pattern:
-        if p in out_text:
-            return 0
-    return None
+#NOTE: DELETE BC ALREADY DEALT WITH IN SERVICES IN BACKEND
+# def swing_type(outcome_text):
+#     out_text = outcome_text.lower()
+#     swing_pattern = [r'field_out', r'single', r'double', r'triple',
+#                      r'home_run', r'grounded_into_double_play', r'force_out',
+#                      r'sac_fly', r'field_error', r'fielders_choice', r'fielders_choice_out',
+#                      r'double_play', r'triple_play', r'swinging_strike', r'foul', r'foul_tip', r'swinging_strike_blocked']
+#     take_pattern = [r'ball', r'walk', r'hit_by_pitch', r'called_strike', r'called_strike', r'blocked_ball']
+#
+#     for p in swing_pattern:
+#         if p in out_text:
+#             return 1
+#     for p in take_pattern:
+#         if p in out_text:
+#             return 0
+#     return None
 
 
 class SuperDataSet(Dataset):
@@ -124,7 +127,8 @@ def main():
     print(f"  Save path: {args.save_path}")
     
     print("\nLoading data...")
-    batter_info = pybaseball.statcast('2025-10-01', '2025-10-15')
+    dataset = DatasetLoaderService().get_training_dataset() #THE IMPORT CHANGE
+    #batter_info = pybaseball.statcast('2025-10-01', '2025-10-15')
     
     shortened_data = batter_info[['batter', 'pitch_type', 'description', 'plate_x', 'plate_z', 'events', 'release_speed', 'release_pos_x', 'launch_speed', 'launch_angle', 'effective_speed', 'release_spin_rate', 'release_extension', 'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0', 'ax', 'ay', 'az', 'sz_top', 'sz_bot', 'estimated_ba_using_speedangle', 'launch_speed_angle']]
     pruned_data = shortened_data
@@ -146,7 +150,8 @@ def main():
 
     pruned_data = pruned_data.dropna(subset=['outcome_text'])
     
-    pruned_data['batting_pattern'] = pruned_data['outcome_text'].apply(swing_type)
+    #pruned_data['batting_pattern'] = pruned_data['outcome_text'].apply(swing_type)
+    pruned_data['batting_pattern'] = pruned_data['outcome_text']
     pruned_data = pruned_data.dropna(subset=['batting_pattern'])
     
     feature_cols = ['release_speed', 'release_pos_x', 'plate_x', 'plate_z', 'launch_speed', 
