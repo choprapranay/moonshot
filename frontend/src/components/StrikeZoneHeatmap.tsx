@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 type HeatmapPoint = {
   plate_x: number;
@@ -16,6 +16,8 @@ type SwingPoint = {
 type StrikeZoneHeatmapProps = {
   heatmap: HeatmapPoint[];
   swings: SwingPoint[];
+  onSwingClick?: (swing: SwingPoint, index: number) => void;
+  selectedSwingIndex?: number | null;
 };
 
 const STRIKE_ZONE_HALF_WIDTH = 0.708; // 17 inches / 24
@@ -35,6 +37,8 @@ const VERTICAL_FALLOFF = STRIKE_ZONE_HEIGHT / 2 + 0.35;
 export function StrikeZoneHeatmap({
   heatmap,
   swings,
+  onSwingClick,
+  selectedSwingIndex,
 }: StrikeZoneHeatmapProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -42,6 +46,7 @@ export function StrikeZoneHeatmap({
     width: 0,
     height: 0,
   });
+  const [hoveredSwingIndex, setHoveredSwingIndex] = useState<number | null>(null);
 
   useLayoutEffect(() => {
     const element = containerRef.current;
@@ -211,27 +216,101 @@ const baseRadius = Math.min(zoneWidth, zoneHeight) * 0.18;
     ctx.lineWidth = 2.75;
     drawRoundedRect(ctx, zoneX, zoneY, zoneWidth, zoneHeight, cornerRadius);
     ctx.stroke();
+  }, [heatmap, dimensions]);
+ 
+  const zoneLayout = useMemo(() => {
+    const { width, height } = dimensions;
+    if (width === 0 || height === 0) return null;
 
-    swings.forEach((swing) => {
-      const x = plateXToPixel(swing.plate_x);
-      const y = plateZToPixel(swing.plate_z);
-      ctx.beginPath();
-      ctx.arc(x, y, 9, 0, Math.PI * 2);
-      ctx.fillStyle = "rgba(74, 108, 247, 0.25)";
-      ctx.fill();
-      ctx.beginPath();
-      ctx.arc(x, y, 6, 0, Math.PI * 2);
-      ctx.fillStyle = "#f8f9ff";
-      ctx.fill();
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "#4a6cf7";
-      ctx.stroke();
-    });
-  }, [heatmap, swings, dimensions]);
+    const targetRatio = STRIKE_ZONE_WIDTH / STRIKE_ZONE_HEIGHT;
+    let zoneHeight = height * 0.7;
+    let zoneWidth = zoneHeight * targetRatio;
+    if (zoneWidth > width * 0.75) {
+      zoneWidth = width * 0.75;
+      zoneHeight = zoneWidth / targetRatio;
+    }
+
+    const zoneCenterX = width / 2;
+    const zoneCenterY = height / 2 - height * 0.05;
+
+    const clampValue = (value: number, min: number, max: number) =>
+      Math.max(min, Math.min(max, value));
+    const plateXToPixel = (plateX: number) => {
+      const clamped = clampValue(plateX, -HORIZONTAL_EXTENT, HORIZONTAL_EXTENT);
+      return zoneCenterX + (clamped / STRIKE_ZONE_HALF_WIDTH) * (zoneWidth / 2);
+    };
+    const plateZToPixel = (plateZ: number) => {
+      const clamped = clampValue(
+        plateZ,
+        VERTICAL_EXTENT_BOTTOM,
+        VERTICAL_EXTENT_TOP
+      );
+      return (
+        zoneCenterY -
+        ((clamped - STRIKE_ZONE_MID) / (STRIKE_ZONE_HEIGHT / 2)) *
+          (zoneHeight / 2)
+      );
+    };
+
+    return { plateXToPixel, plateZToPixel };
+  }, [dimensions]);
 
   return (
     <div ref={containerRef} className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl">
       <canvas ref={canvasRef} className="absolute inset-0" />
+      {zoneLayout && swings.map((swing, index) => {
+        const x = zoneLayout.plateXToPixel(swing.plate_x);
+        const y = zoneLayout.plateZToPixel(swing.plate_z);
+        const isHovered = hoveredSwingIndex === index;
+        const isSelected = selectedSwingIndex === index;
+        const scale = isHovered ? 1.35 : isSelected ? 1.2 : 1;
+        
+        return (
+          <button
+            key={index}
+            type="button"
+            className="absolute cursor-pointer transition-transform duration-200 ease-out"
+            style={{
+              left: `${x}px`,
+              top: `${y}px`,
+              transform: `translate(-50%, -50%) scale(${scale})`,
+            }}
+            onMouseEnter={() => setHoveredSwingIndex(index)}
+            onMouseLeave={() => setHoveredSwingIndex(null)}
+            onClick={() => onSwingClick?.(swing, index)}
+          >
+            <div
+              className="relative"
+              style={{
+                width: "18px",
+                height: "18px",
+              }}
+            >
+              <div
+                className="absolute rounded-full"
+                style={{
+                  width: "18px",
+                  height: "18px",
+                  backgroundColor: "rgba(74, 108, 247, 0.25)",
+                }}
+              />
+              <div
+                className="absolute rounded-full"
+                style={{
+                  left: "50%",
+                  top: "50%",
+                  width: "12px",
+                  height: "12px",
+                  transform: "translate(-50%, -50%)",
+                  backgroundColor: "#f8f9ff",
+                  border: `${isSelected ? "2.5px" : "2px"} solid ${isSelected ? "#5b7fff" : "#4a6cf7"}`,
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+          </button>
+        );
+      })}
       <div className="pointer-events-none mt-auto flex justify-center gap-6 pb-4 text-[11px] tracking-wide text-[#9aa0d4]">
         <div className="flex items-center gap-2">
           <span className="h-3 w-3 rounded-full bg-[#4a6cf7]" />

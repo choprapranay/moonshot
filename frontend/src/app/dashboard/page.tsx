@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { StrikeZoneHeatmap } from "@/components/StrikeZoneHeatmap";
 
 type TeamInfo = {
@@ -16,6 +16,7 @@ type PlayerStats = {
   whiff_percentage: number;
   contact_percentage: number;
   average_velocity: number | null;
+  batter_handedness?: string | null;
 };
 
 type PlayerSummary = {
@@ -55,6 +56,33 @@ type PlayerHeatmapResponse = {
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 const FALLBACK_HEADSHOT = "https://via.placeholder.com/80x80?text=?";
 
+const PITCH_TYPE_NAMES: Record<string, string> = {
+  FF: "Four-seam Fastball",
+  FT: "Two-seam Fastball",
+  FC: "Cutter",
+  SI: "Sinker",
+  SL: "Slider",
+  CH: "Changeup",
+  CU: "Curveball",
+  KC: "Knuckle Curve",
+  KN: "Knuckleball",
+  SC: "Screwball",
+  FO: "Forkball",
+  PO: "Pitch Out",
+  FS: "Split-finger Fastball",
+  ST: "Sweeper",
+  SV: "Slurve",
+  FA: "Fastball",
+  EP: "Eephus",
+  IN: "Intentional Ball",
+  UN: "Unknown",
+};
+
+function getPitchTypeName(abbreviation: string | null | undefined): string {
+  if (!abbreviation) return "—";
+  return PITCH_TYPE_NAMES[abbreviation.toUpperCase()] || abbreviation;
+}
+
 async function fetchGameAnalysis(gameId: string): Promise<GameAnalysisResponse> {
   const response = await fetch(`${API_BASE_URL}/game/${gameId}/analysis`);
   if (!response.ok) {
@@ -65,6 +93,7 @@ async function fetchGameAnalysis(gameId: string): Promise<GameAnalysisResponse> 
 }
 
 export default function Dashboard() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const gameIdParam = searchParams.get("gameId");
 
@@ -77,6 +106,7 @@ export default function Dashboard() {
   const [swingData, setSwingData] = useState<SwingPoint[]>([]);
   const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [heatmapError, setHeatmapError] = useState<string | null>(null);
+  const [selectedSwingIndex, setSelectedSwingIndex] = useState<number | null>(null);
 
   useEffect(() => {
     if (!gameIdParam) {
@@ -151,6 +181,7 @@ export default function Dashboard() {
       .then((payload) => {
         setHeatmapData(payload.heatmap ?? []);
         setSwingData(payload.swings ?? []);
+        setSelectedSwingIndex(null);
       })
       .catch((err: unknown) => {
         if (abort.signal.aborted) return;
@@ -184,9 +215,39 @@ export default function Dashboard() {
       />
       <div className="absolute inset-0 pointer-events-none backdrop-blur-[28px] opacity-85" />
 
+      <button
+        type="button"
+        onClick={() => router.push("/")}
+        className="absolute left-6 top-6 z-20 flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-all hover:scale-105"
+        style={{
+          color: "#d6daf6",
+          background: "rgba(7, 10, 22, 0.52)",
+          boxShadow: "0 14px 32px rgba(3, 5, 12, 0.6)",
+          backdropFilter: "blur(26px) saturate(140%)",
+          WebkitBackdropFilter: "blur(26px) saturate(140%)",
+        }}
+      >
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M10 12L6 8L10 4"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <span>Back</span>
+      </button>
+
       <div
         className="relative z-10 mx-auto flex h-full max-w-7xl flex-col gap-6 px-8 py-6 md:px-12 md:py-10"
-        style={{ paddingTop: "10vh", paddingBottom: "10vh" }}
+        style={{ paddingTop: "3vh", paddingBottom: "0vh" }}
       >
         <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
@@ -271,7 +332,7 @@ export default function Dashboard() {
                 opacity: 0.28,
               }}
             />
-            <div className="relative z-10">
+            <div className="relative z-10 p-4">
               <p style={{ color: "#d6daf6" }}>Loading dashboard…</p>
             </div>
           </div>
@@ -345,7 +406,12 @@ export default function Dashboard() {
                   ) : heatmapError ? (
                     <span className="text-sm text-red-300">{heatmapError}</span>
                   ) : heatmapData.length ? (
-                    <StrikeZoneHeatmap heatmap={heatmapData} swings={swingData} />
+                    <StrikeZoneHeatmap 
+                      heatmap={heatmapData} 
+                      swings={swingData}
+                      onSwingClick={(swing, index) => setSelectedSwingIndex(index)}
+                      selectedSwingIndex={selectedSwingIndex}
+                    />
                   ) : (
                     <span className="text-sm" style={{ color: "#9aa0d4" }}>
                       No heatmap data available.
@@ -432,6 +498,18 @@ export default function Dashboard() {
                       </dt>
                       <dd className="text-xl font-semibold">{selectedPlayer.stats.contact_percentage.toFixed(1)}%</dd>
                     </div>
+                    <div>
+                      <dt className="text-xs uppercase tracking-wide" style={{ color: "#9aa0d4" }}>
+                        Batter Hand
+                      </dt>
+                      <dd className="text-xl font-semibold">
+                        {selectedPlayer.stats.batter_handedness === "L"
+                          ? "Left"
+                          : selectedPlayer.stats.batter_handedness === "R"
+                          ? "Right"
+                          : "—"}
+                      </dd>
+                    </div>
                   </dl>
 
                   <div
@@ -443,12 +521,31 @@ export default function Dashboard() {
                        WebkitBackdropFilter: "blur(36px) saturate(145%)",
                      }}
                    >
-                    <h3 className="text-base font-semibold">Area of Concern</h3>
-                    <div className="mt-3 flex items-baseline justify-between gap-4">
-                      <span className="text-3xl font-bold text-slate-400">
-                        —
-                      </span>
-                    </div>
+                    <h3 className="text-base font-semibold text-white">Swing Details</h3>
+                    {selectedSwingIndex !== null && swingData[selectedSwingIndex] ? (
+                      <div className="mt-3 space-y-3">
+                        <div>
+                          <dt className="text-xs uppercase tracking-wide" style={{ color: "#9aa0d4" }}>
+                            Pitch Type
+                          </dt>
+                          <dd className="mt-1 text-lg font-semibold text-white">
+                            {getPitchTypeName(swingData[selectedSwingIndex].pitch_type)}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-xs uppercase tracking-wide" style={{ color: "#9aa0d4" }}>
+                            Description
+                          </dt>
+                          <dd className="mt-1 text-lg font-semibold text-white">
+                            {swingData[selectedSwingIndex].description || "—"}
+                          </dd>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="mt-3 text-sm" style={{ color: "#9aa0d4" }}>
+                        Click on a swing dot to see details
+                      </div>
+                    )}
                   </div>
                 </>
               ) : (
