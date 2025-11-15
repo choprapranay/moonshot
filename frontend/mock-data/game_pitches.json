@@ -1,0 +1,305 @@
+{
+  "game_id": "2025-07-12-BlueJays-Yankees",
+  "pitch_data": [
+    {
+      "x": -0.23,
+      "y": 0.44,
+      "pitch_type": "Slider",
+      "result": "Ball"
+    },
+    {
+      "x": -0.6,
+      "y": 1.67,
+      "pitch_type": "Curveball",
+      "result": "Hit"
+    },
+    {
+      "x": 0.07,
+      "y": 1.54,
+      "pitch_type": "Fastball",
+      "result": "Swinging Strike"
+    },
+    {
+      "x": -0.03,
+      "y": 0.93,
+      "pitch_type": "Slider",
+      "result": "Foul"
+    },
+    {
+      "x": 0.77,
+      "y": 1.9,
+      "pitch_type": "Slider",
+      "result": "Ball"
+    },
+    {
+      "x": -0.09,
+      "y": 0.39,
+      "pitch_type": "Curveball",
+      "result": "Strike"
+    },
+    {
+      "x": 1.07,
+      "y": 1.16,
+      "pitch_type": "Fastball",
+      "result": "Hit"
+    },
+    {
+      "x": -0.44,
+      "y": 0.09,
+      "pitch_type": "Fastball",
+      "result": "Hit"
+    },
+    {
+      "x": -0.71,
+      "y": 2.18,
+      "pitch_type": "Fastball",
+      "result": "Hit"
+    },
+    {
+      "x": 0.04,
+      "y": 0.44,
+      "pitch_type": "Changeup",
+      "result": "Strike"
+    },
+    {
+      "x": -0.34,
+      "y": 0.47,
+      "pitch_type": "Slider",
+      "result": "Hit"
+    },
+    {
+      "x": 0.23,
+      "y": 2.16,
+      "pitch_type": "Slider",
+      "result": "Strike"
+    },
+    {
+      "x": -0.94,
+      "y": 0.38,
+      "pitch_type": "Changeup",
+      "result": "Strike"
+    },
+    {
+      "x": 1.05,
+      "y": 1.39,
+      "pitch_type": "Slider",
+      "result": "Foul"
+    },
+    {
+      "x": 0.28,
+      "y": 0.84,
+      "pitch_type": "Slider",
+      "result": "Swinging Strike"
+    },
+    {
+      "x": -0.23,
+      "y": 1.98,
+      "pitch_type": "Fastball",
+      "result": "Ball"
+    },
+    {
+      "x": -0.14,
+      "y": 1.2,
+      "pitch_type": "Slider",
+      "result": "Foul"
+    },
+    {
+      "x": 1.06,
+      "y": 1.05,
+      "pitch_type": "Fastball",
+      "result": "Ball"
+    },
+    {
+      "x": 0.57,
+      "y": 1.58,
+      "pitch_type": "Slider",
+      "result": "Swinging Strike"
+    },
+    {
+      "x": 1.06,
+      "y": 0.27,
+      "pitch_type": "Fastball",
+      "result": "Ball"
+    },
+    {
+      "x": -0.49,
+      "y": 2.18,
+      "pitch_type": "Changeup",
+      "result": "Ball"
+    },
+    {
+      "x": 1.02,
+      "y": 1.94,
+      "pitch_type": "Curveball",
+      "result": "Hit"
+    },
+    {
+      "x": 0.72,
+      "y": 1.86,
+      "pitch_type": "Fastball",
+      "result": "Foul"
+    },
+    {
+      "x": -0.75,
+      "y": 0.16,
+      "pitch_type": "Curveball",
+      "result": "Strike"
+    },
+    {
+      "x": 0.21,
+      "y": 0.1,
+      "pitch_type": "Slider",
+      "result": "Hit"
+    },
+    {
+      "x": -0.24,
+      "y": 1.81,
+      "pitch_type": "Changeup",
+      "result": "Hit"
+    },
+    {
+      "x": -0.21,
+      "y": 0.82,
+      "pitch_type": "Fastball",
+      "result": "Ball"
+    },
+    {
+      "x": 0.91,
+      "y": 2.03,
+      "pitch_type": "Changeup",
+      "result": "Hit"
+    },
+    {
+      "x": -0.65,
+      "y": 1.88,
+      "pitch_type": "Slider",
+      "result": "Foul"
+    },
+    {
+      "x": -0.95,
+      "y": 1.51,
+      "pitch_type": "Curveball",
+      "result": "Ball"
+    },
+    {
+      "x": 0.63,
+      "y": 1.57,
+      "pitch_type": "Slider",
+      "result": "Hit"
+    },
+    {
+      "x": -0.49,
+      "y": 1.65,
+      "pitch_type": "Fastball",
+      "result": "Hit"
+    },
+    {
+      "x": -0.19,
+      "y": 2.0,
+      "pitch_type": "Fastball",
+      "result": "Swinging Strike"
+    },
+    {
+      "x": -0.5,
+      "y": 1.51,
+      "pitch_type": "Curveball",
+      "result": "Hit"
+    },
+    {
+      "x": 0.08,
+      "y": 2.05,
+      "pitch_type": "Curveball",
+      "result": "Hit"
+    },
+    {
+      "x": 0.92,
+      "y": 0.9,
+      "pitch_type": "Slider",
+      "result": "Foul"
+    },
+    {
+      "x": -0.29,
+      "y": 1.49,
+      "pitch_type": "Changeup",
+      "result": "Ball"
+    },
+    {
+      "x": -0.29,
+      "y": 1.95,
+      "pitch_type": "Curveball",
+      "result": "Strike"
+    },
+    {
+      "x": 0.4,
+      "y": 1.53,
+      "pitch_type": "Slider",
+      "result": "Ball"
+    },
+    {
+      "x": 0.69,
+      "y": 0.57,
+      "pitch_type": "Changeup",
+      "result": "Ball"
+    },
+    {
+      "x": -0.22,
+      "y": 1.9,
+      "pitch_type": "Changeup",
+      "result": "Strike"
+    },
+    {
+      "x": -0.93,
+      "y": 1.17,
+      "pitch_type": "Fastball",
+      "result": "Swinging Strike"
+    },
+    {
+      "x": -0.45,
+      "y": 1.48,
+      "pitch_type": "Slider",
+      "result": "Swinging Strike"
+    },
+    {
+      "x": 0.68,
+      "y": 0.98,
+      "pitch_type": "Slider",
+      "result": "Foul"
+    },
+    {
+      "x": 0.6,
+      "y": 1.63,
+      "pitch_type": "Changeup",
+      "result": "Swinging Strike"
+    },
+    {
+      "x": 0.07,
+      "y": 1.36,
+      "pitch_type": "Curveball",
+      "result": "Ball"
+    },
+    {
+      "x": 0.57,
+      "y": 2.2,
+      "pitch_type": "Curveball",
+      "result": "Strike"
+    },
+    {
+      "x": 0.19,
+      "y": 2.11,
+      "pitch_type": "Changeup",
+      "result": "Foul"
+    },
+    {
+      "x": -0.31,
+      "y": 1.23,
+      "pitch_type": "Curveball",
+      "result": "Ball"
+    },
+    {
+      "x": 0.62,
+      "y": 2.18,
+      "pitch_type": "Changeup",
+      "result": "Hit"
+    }
+  ]
+}
