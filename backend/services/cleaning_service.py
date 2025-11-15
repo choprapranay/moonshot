@@ -16,8 +16,8 @@ class CleaningService:
         # Replace infinite values with 0 (Supabase/JSON can't handle inf)
         df = df.replace([np.inf, -np.inf], 0)
 
-        # Fill any remaining NaN with 0 for numeric columns
-        df = df.fillna(0)
+        # Drop remaining rows with any NaN (clean dataset for ML)
+        df = df.dropna()
 
         # Convert all datetime columns to string for JSON serialization
         for col in df.columns:
