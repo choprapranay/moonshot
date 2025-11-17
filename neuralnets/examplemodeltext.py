@@ -8,7 +8,6 @@ def load_model_and_encoders(model_path):
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
-    # Initialize model with saved parameters
     model = SuperModel(
         num_batters=checkpoint['num_batters'],
         num_pitch_types=checkpoint['num_pitches'],
@@ -16,7 +15,6 @@ def load_model_and_encoders(model_path):
         output_dim=checkpoint['num_outcomes']
     ).to(device)
     
-    # Load model weights
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     
@@ -37,20 +35,14 @@ def predict_and_decode(model_data, batter_id_raw, pitch_type_raw, features_raw):
     model = model_data['model']
     device = model_data['device']
     
-    # Encode inputs
-    try:
-        batter_id_encoded = model_data['batter_encoder'].transform([batter_id_raw])[0]
-    except ValueError:
-        print(f"Warning: Batter {batter_id_raw} not in training data, using 0")
-        batter_id_encoded = 0
+
+    batter_id_encoded = model_data['batter_encoder'].transform([batter_id_raw])[0]
     
-    try:
-        pitch_type_encoded = model_data['pitch_encoder'].transform([pitch_type_raw])[0]
-    except ValueError:
-        print(f"Warning: Pitch type {pitch_type_raw} not in training data, using 0")
-        pitch_type_encoded = 0
     
-    # Prepare features
+    
+    pitch_type_encoded = model_data['pitch_encoder'].transform([pitch_type_raw])[0]
+    
+    
     if isinstance(features_raw, dict):
         feature_names = ['release_speed', 'release_pos_x', 'plate_x', 'plate_z', 'launch_speed', 
                         'launch_angle', 'effective_speed', 'release_spin_rate', 'release_extension', 
@@ -60,24 +52,20 @@ def predict_and_decode(model_data, batter_id_raw, pitch_type_raw, features_raw):
     else:
         features_array = np.array(features_raw)
     
-    # Scale continuous features (first 17 features, excluding batting_pattern_id and launch_speed_angle_id)
     features_to_scale = features_array[[0,1,2,3,4,5,6,7,8,11,12,13,14,15,16,17,18,19]]
     features_scaled = features_array.copy()
     features_scaled[[0,1,2,3,4,5,6,7,8,11,12,13,14,15,16,17,18,19]] = model_data['scaler'].transform(
         features_to_scale.reshape(1, -1)
     )[0]
     
-    # Convert to tensors
     batter_tensor = torch.tensor([batter_id_encoded], dtype=torch.long).to(device)
     pitch_tensor = torch.tensor([pitch_type_encoded], dtype=torch.long).to(device)
     features_tensor = torch.tensor(features_scaled, dtype=torch.float32).unsqueeze(0).to(device)
     
-    # Make prediction
     with torch.inference_mode():
         logits = model(batter_tensor, pitch_tensor, features_tensor)
         probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
     
-    # Decode output
     predictions_with_probs = []
     for i, label in enumerate(model_data['labels']):
         predictions_with_probs.append({
@@ -85,10 +73,8 @@ def predict_and_decode(model_data, batter_id_raw, pitch_type_raw, features_raw):
             'probability': float(probs[i])
         })
     
-    # Sort by probability
     predictions_with_probs.sort(key=lambda x: x['probability'], reverse=True)
     
-    # Get top prediction
     top_prediction = predictions_with_probs[0]
     
     return {
@@ -110,12 +96,10 @@ def main():
     print(f"Available pitch types: {list(model_data['pitch_encoder'].classes_)}")
     print(f"Possible outcomes: {model_data['labels']}\n")
     
-    # Example 1: Using a batter from training data
     print("=" * 60)
     print("Example 1: Prediction with encoded output")
     print("=" * 60)
     
-    # Get a sample batter ID from the encoder
     sample_batter = model_data['batter_encoder'].classes_[0]
     
     example_features = np.array([

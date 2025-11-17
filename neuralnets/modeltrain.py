@@ -7,27 +7,31 @@ import numpy as np
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.model_selection import train_test_split
 import argparse
+import sys
+import os
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(1, parent_dir)
 
-from services.dataset_loader_service import DatasetLoaderService
+from backend.services.dataset_loader_service import DatasetLoaderService
+from backend.infrastructure.model_storage import ModelStorage
 
 
-#NOTE: DELETE BC ALREADY DEALT WITH IN SERVICES IN BACKEND
-# def swing_type(outcome_text):
-#     out_text = outcome_text.lower()
-#     swing_pattern = [r'field_out', r'single', r'double', r'triple',
-#                      r'home_run', r'grounded_into_double_play', r'force_out',
-#                      r'sac_fly', r'field_error', r'fielders_choice', r'fielders_choice_out',
-#                      r'double_play', r'triple_play', r'swinging_strike', r'foul', r'foul_tip', r'swinging_strike_blocked']
-#     take_pattern = [r'ball', r'walk', r'hit_by_pitch', r'called_strike', r'called_strike', r'blocked_ball']
-#
-#     for p in swing_pattern:
-#         if p in out_text:
-#             return 1
-#     for p in take_pattern:
-#         if p in out_text:
-#             return 0
-#     return None
 
+def swing_type(outcome_text):     
+    out_text = outcome_text.lower()
+    swing_pattern = [r'field_out', r'single', r'double', r'triple',
+                      r'home_run', r'grounded_into_double_play', r'force_out',
+                      r'sac_fly', r'field_error', r'fielders_choice', r'fielders_choice_out',
+                      r'double_play', r'triple_play', r'swinging_strike', r'foul', r'foul_tip', r'swinging_strike_blocked']
+    take_pattern = [r'ball', r'walk', r'hit_by_pitch', r'called_strike', r'called_strike', r'blocked_ball']
+
+    for p in swing_pattern:
+        if p in out_text:
+            return 1
+    for p in take_pattern:
+        if p in out_text:
+            return 0
+    return None
 
 class SuperDataSet(Dataset):
     def __init__(self, df):
@@ -100,7 +104,6 @@ def calculate_accuracy(model, data_loader, device):
     return accuracy
 
 def decode_probable(probable_list, batter_enc, pitch_enc):
-    """Decode the probable list to show original batter IDs and pitch types"""
     decoded = []
     for confidence, outcome, batter_id, pitch_type_id in probable_list:
         decoded.append({
@@ -128,9 +131,11 @@ def main():
     
     print("\nLoading data...")
     dataset = DatasetLoaderService().get_training_dataset() #THE IMPORT CHANGE
-    #batter_info = pybaseball.statcast('2025-10-01', '2025-10-15')
-    
-    shortened_data = batter_info[['batter', 'pitch_type', 'description', 'plate_x', 'plate_z', 'events', 'release_speed', 'release_pos_x', 'launch_speed', 'launch_angle', 'effective_speed', 'release_spin_rate', 'release_extension', 'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0', 'ax', 'ay', 'az', 'sz_top', 'sz_bot', 'estimated_ba_using_speedangle', 'launch_speed_angle']]
+    #batter_info = pybaseball.statcast('2023-03-30', '2023-10-01')
+    #batter_info_2024 = pybaseball.statcast('2024-03-28', '2024-09-29')
+    #batter_info = pd.concat([batter_info, batter_info_2024], ignore_index=True)
+
+    shortened_data = dataset[['batter', 'pitch_type', 'description', 'plate_x', 'plate_z', 'events', 'release_speed', 'release_pos_x', 'launch_speed', 'launch_angle', 'effective_speed', 'release_spin_rate', 'release_extension', 'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0', 'ax', 'ay', 'az', 'sz_top', 'sz_bot', 'estimated_ba_using_speedangle', 'launch_speed_angle']]
     pruned_data = shortened_data
     print(f"Data shape: {pruned_data.shape}")
     
@@ -150,8 +155,8 @@ def main():
 
     pruned_data = pruned_data.dropna(subset=['outcome_text'])
     
-    #pruned_data['batting_pattern'] = pruned_data['outcome_text'].apply(swing_type)
-    pruned_data['batting_pattern'] = pruned_data['outcome_text']
+    pruned_data['batting_pattern'] = pruned_data['outcome_text'].apply(swing_type)
+
     pruned_data = pruned_data.dropna(subset=['batting_pattern'])
     
     feature_cols = ['release_speed', 'release_pos_x', 'plate_x', 'plate_z', 'launch_speed', 
@@ -199,7 +204,7 @@ def main():
     print("\nOutcome distribution:")
     print(pruned_data['outcome_text'].value_counts())
     
-    labels = list(set(pruned_data['outcome_text'].values))
+    labels = list(outcome_enc.classes_)
     print(f"\nNumber of unique outcomes: {NUM_OUTCOMES}")
     print(f"Number of pitch types: {NUM_PITCHES}")
     print(f"Number of batter patterns: {NUM_BATTER_PATTERNS}")
@@ -321,6 +326,12 @@ def main():
     
     torch.save(save_dict, args.save_path)
     print(f"\nModel saved as '{args.save_path}'")
+    store = ModelStorage()
+
+    store.upload_model(
+        file_path=args.save_path,
+        dest_path="moonshot_v1/final_batter_outcome_model.pth"
+    )
 
 
 if __name__ == "__main__":

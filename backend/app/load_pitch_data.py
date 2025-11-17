@@ -1,15 +1,18 @@
-from services.pitch_data_service import PitchDataService
-from services.cleaning_service import CleaningService
-from infrastructure.supabase_repository import SupabaseRepository
+import sys
+import os
 import time
+
+parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../..'))
+sys.path.insert(1, parent_dir)
+
+from backend.services.pitch_data_service import PitchDataService
+from backend.services.cleaning_service import CleaningService
+from backend.infrastructure.supabase_repository import SupabaseRepository
 
 BATCH_SIZE = 500
 RETRY_LIMIT = 3
 
 def batch_insert(repo, table, rows):
-    """
-    Inserts rows in batches to avoid memory overload and API limits.
-    """
     for i in range(0, len(rows), BATCH_SIZE):
         batch = rows[i:i + BATCH_SIZE]
 
