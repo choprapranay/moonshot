@@ -513,7 +513,7 @@ export default function Dashboard() {
                   </dl>
 
                   <div
-                     className="mt-auto rounded-xl p-4"
+                     className="mt-auto rounded-xl py-4"
                      style={{
                        background: "rgba(4, 7, 18, 0.5)",
                        boxShadow: "0 18px 44px rgba(2, 4, 10, 0.64)",
@@ -537,7 +537,12 @@ export default function Dashboard() {
                             Description
                           </dt>
                           <dd className="mt-1 text-lg font-semibold text-white">
-                            {swingData[selectedSwingIndex].description?.split("_").join(" ") || "—"}
+                            {swingData[selectedSwingIndex].description
+                              ? swingData[selectedSwingIndex].description
+                                  .split("_")
+                                  .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                  .join(" ")
+                              : "—"}
                           </dd>
                         </div>
                       </div>
