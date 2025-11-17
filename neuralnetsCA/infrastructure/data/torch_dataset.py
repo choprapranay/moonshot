@@ -18,7 +18,7 @@ class SuperDataSet(Dataset):
         return batter_id, pitch_type_id, features, y
     
     def __len__(self):
-        return len(self.df)
+        return self.targets.shape[0]
 
 def build_dataloaders(split: DatasetSplit, batch_size: int):
 

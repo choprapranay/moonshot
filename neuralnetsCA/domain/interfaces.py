@@ -16,12 +16,12 @@ class DataPreprocessorInterface(ABC):
     def preprocess(self, raw_data: pd.DataFrame) -> DatasetSplit:
         pass
 
+#Sumedh you got these parts
 class DecoderInterface(ABC):
     @abstractmethod
     def decode(self, model_output: np.ndarray) -> Dict[str, Any]:
         pass
 
-#Sumedh you got this part
 class ModelInterface(ABC):
     @abstractmethod
     def train_and_save(self, split_data: DatasetSplit, epochs: int, batch_size: int, lr: float):
