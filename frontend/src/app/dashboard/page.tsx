@@ -537,7 +537,7 @@ export default function Dashboard() {
                             Description
                           </dt>
                           <dd className="mt-1 text-lg font-semibold text-white">
-                            {swingData[selectedSwingIndex].description || "—"}
+                            {swingData[selectedSwingIndex].description?.split("_").join(" ") || "—"}
                           </dd>
                         </div>
                       </div>
