@@ -1,0 +1,65 @@
+# Supabase CLI Commands
+
+# Check Supabase project status
+supabase status
+
+# Start local Supabase services (database, API, etc.)
+supabase start
+
+# Stop local Supabase services
+supabase stop
+
+# Reset the local database (drops and recreates all data)
+supabase db reset
+
+# Pull the current database schema from the remote database into your local project
+supabase db pull
+
+# Push your local migrations/schema to the remote database
+supabase db push
+
+# Typical workflow for syncing schema:
+supabase db reset   # Reset local db (optional, destructive)
+supabase db pull    # Get latest schema from remote
+supabase db push    # Apply local migrations to remote
+
+# Create a new migration file (replace <migration_name> with your description)
+supabase migration new <migration_name>
+
+# After creating a migration, edit the generated SQL file in supabase/migrations/
+
+# SQL Examples
+
+# Create a new table
+CREATE TABLE <table_name> (
+    <column_name> <column_type> [constraints],
+    -- add more columns as needed
+    PRIMARY KEY (<column_name>)
+);
+
+# Add a column to an existing table
+ALTER TABLE <table_name> ADD COLUMN <column_name> <column_type> [constraints];
+
+# Remove a column from an existing table
+ALTER TABLE <table_name> DROP COLUMN <column_name>;
+
+# Rename a column
+ALTER TABLE <table_name> RENAME COLUMN <old_column_name> TO <new_column_name>;
+
+# Change a column's type
+ALTER TABLE <table_name> ALTER COLUMN <column_name> TYPE <new_type>;
+
+# Drop a table
+DROP TABLE <table_name>;
+
+# List all tables in the current database (psql command)
+\dt
+
+# Connect to local database with psql (from project root)
+psql -h localhost -p 54322 -U postgres -d postgres
+
+# password for postgres is "postgres"
+
+# Useful links:
+# Supabase CLI docs: https://supabase.com/docs/guides/cli
+# SQL reference: https://www.postgresql.org/docs/current/sql.html

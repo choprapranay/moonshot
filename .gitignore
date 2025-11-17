@@ -20,3 +20,6 @@ dist/
 # Operating system specific files
 .DS_Store
 Thumbs.db
+
+node_modules/
+.env
