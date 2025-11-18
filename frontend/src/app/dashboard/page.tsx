@@ -247,7 +247,7 @@ export default function Dashboard() {
 
       <div
         className="relative z-10 mx-auto flex h-full max-w-7xl flex-col gap-6 px-8 py-6 md:px-12 md:py-10"
-        style={{ paddingTop: "3vh", paddingBottom: "0vh" }}
+        style={{ paddingTop: "calc(3vh + 3rem)", paddingBottom: "0vh" }}
       >
         <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>

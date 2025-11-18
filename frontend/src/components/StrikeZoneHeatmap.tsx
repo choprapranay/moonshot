@@ -27,9 +27,9 @@ const STRIKE_ZONE_MID = (STRIKE_ZONE_TOP + STRIKE_ZONE_BOTTOM) / 2;
 const STRIKE_ZONE_WIDTH = STRIKE_ZONE_HALF_WIDTH * 2;
 const STRIKE_ZONE_HEIGHT = STRIKE_ZONE_TOP - STRIKE_ZONE_BOTTOM;
 
-const HORIZONTAL_EXTENT = STRIKE_ZONE_HALF_WIDTH + 1.4; // allow balls way off the plate
-const VERTICAL_EXTENT_TOP = STRIKE_ZONE_TOP + 1.4;
-const VERTICAL_EXTENT_BOTTOM = STRIKE_ZONE_BOTTOM - 1.2;
+const HORIZONTAL_EXTENT = STRIKE_ZONE_HALF_WIDTH + 1.0; // Natural extension outside strike zone
+const VERTICAL_EXTENT_TOP = STRIKE_ZONE_TOP + 1.0;
+const VERTICAL_EXTENT_BOTTOM = STRIKE_ZONE_BOTTOM - 0.8;
 
 const HORIZONTAL_FALLOFF = STRIKE_ZONE_HALF_WIDTH + 0.3; // ~1 inch bleed
 const VERTICAL_FALLOFF = STRIKE_ZONE_HEIGHT / 2 + 0.35;
@@ -96,6 +96,16 @@ export function StrikeZoneHeatmap({
     const zoneX = zoneCenterX - zoneWidth / 2;
     const zoneY = zoneCenterY - zoneHeight / 2;
     const cornerRadius = 8;
+    
+    // Grid-based aggregation - coarser grid for bigger, flowing blobs
+    const GRID_SIZE = 35; // Coarser grid = fewer, bigger blobs
+    const grid: { sum: number; count: number }[][] = Array(GRID_SIZE)
+      .fill(null)
+      .map(() =>
+        Array(GRID_SIZE)
+          .fill(null)
+          .map(() => ({ sum: 0, count: 0 }))
+      );
 
     const drawRoundedRect = (
       context: CanvasRenderingContext2D,
@@ -121,14 +131,32 @@ export function StrikeZoneHeatmap({
 
     ctx.save();
 
-const baseRadius = Math.min(zoneWidth, zoneHeight) * 0.18;
-
+    // Aggregate heatmap data into grid to reduce overlapping points
+    heatmap.forEach((point) => {
+      const adjustedPlateZ = point.plate_z + STRIKE_ZONE_MID;
+      
+      // Map to grid coordinates
+      const normX = (point.plate_x + HORIZONTAL_EXTENT) / (2 * HORIZONTAL_EXTENT);
+      const normZ = (adjustedPlateZ - VERTICAL_EXTENT_BOTTOM) / (VERTICAL_EXTENT_TOP - VERTICAL_EXTENT_BOTTOM);
+      
+      const gridX = Math.floor(normX * GRID_SIZE);
+      const gridZ = Math.floor(normZ * GRID_SIZE);
+      
+      if (gridX >= 0 && gridX < GRID_SIZE && gridZ >= 0 && gridZ < GRID_SIZE) {
+        grid[gridZ][gridX].sum += point.expected_value_diff;
+        grid[gridZ][gridX].count += 1;
+      }
+    });
+    
+    // Helper functions
     const clampValue = (value: number, min: number, max: number) =>
       Math.max(min, Math.min(max, value));
+    
     const plateXToPixel = (plateX: number) => {
       const clamped = clampValue(plateX, -HORIZONTAL_EXTENT, HORIZONTAL_EXTENT);
       return zoneCenterX + (clamped / STRIKE_ZONE_HALF_WIDTH) * (zoneWidth / 2);
     };
+    
     const plateZToPixel = (plateZ: number) => {
       const clamped = clampValue(
         plateZ,
@@ -142,52 +170,105 @@ const baseRadius = Math.min(zoneWidth, zoneHeight) * 0.18;
       );
     };
 
-    ctx.globalCompositeOperation = "lighter";
+    const baseRadius = Math.min(zoneWidth, zoneHeight) * 0.18;
 
-    const ellipticalDistance = (plateX: number, plateZ: number) => {
-      const dx = Math.abs(plateX);
-      const dz = Math.abs(plateZ - STRIKE_ZONE_MID);
-      const nx = dx / HORIZONTAL_FALLOFF;
-      const nz = dz / VERTICAL_FALLOFF;
-      return Math.sqrt(nx * nx + nz * nz);
-    };
-
-    heatmap.forEach((point) => {
-      const adjustedPlateZ = point.plate_z + STRIKE_ZONE_MID;
-      const weighting = (() => {
-        const dist = ellipticalDistance(point.plate_x, adjustedPlateZ);
-        if (dist <= 1) return 1;
-        return Math.exp(-(dist - 1) * 2.2);
-      })();
-
-      const x = plateXToPixel(point.plate_x);
-      const y = plateZToPixel(adjustedPlateZ);
-      const intensity = Math.min(
-        Math.abs(point.expected_value_diff) / 0.16,
-        1
-      );
-      const alpha = (0.12 + intensity * 0.28) * weighting;
-      if (alpha <= 0.02) {
-        return;
+    // Calculate max count for density adjustment
+    let maxCount = 0;
+    for (let gy = 0; gy < GRID_SIZE; gy++) {
+      for (let gx = 0; gx < GRID_SIZE; gx++) {
+        if (grid[gy][gx].count > maxCount) {
+          maxCount = grid[gy][gx].count;
+        }
       }
-      const isPositive = point.expected_value_diff >= 0;
-      const radius =
-        baseRadius *
-        (0.9 + intensity * 0.4) *
-        (0.85 + weighting * 0.3);
-      const gradient = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    }
 
-      if (isPositive) {
-        gradient.addColorStop(0, `rgba(96, 160, 255, ${alpha})`);
-        gradient.addColorStop(1, "rgba(96, 160, 255, 0)");
-      } else {
-        gradient.addColorStop(0, `rgba(247, 102, 136, ${alpha})`);
-        gradient.addColorStop(1, "rgba(247, 102, 136, 0)");
+    // Draw ALL cells (no aggressive filtering), with low alpha to handle massive data
+    for (let gy = 0; gy < GRID_SIZE; gy++) {
+      for (let gx = 0; gx < GRID_SIZE; gx++) {
+        const cell = grid[gy][gx];
+        if (cell.count === 0) continue;
+        
+        const avgEV = cell.sum / cell.count;
+        // Only filter out extreme noise
+        if (Math.abs(avgEV) < 0.008) continue;
+        
+        // Map grid back to plate coordinates (center of cell)
+        const normX = (gx + 0.5) / GRID_SIZE;
+        const normZ = (gy + 0.5) / GRID_SIZE;
+        const plateX = normX * (2 * HORIZONTAL_EXTENT) - HORIZONTAL_EXTENT;
+        const plateZ = normZ * (VERTICAL_EXTENT_TOP - VERTICAL_EXTENT_BOTTOM) + VERTICAL_EXTENT_BOTTOM;
+        
+        // Natural circular falloff - distance from strike zone center
+        const distFromCenterX = Math.abs(plateX) / STRIKE_ZONE_HALF_WIDTH;
+        const distFromCenterZ = Math.abs(plateZ - STRIKE_ZONE_MID) / (STRIKE_ZONE_HEIGHT / 2);
+        const normalizedDist = Math.sqrt(distFromCenterX * distFromCenterX + distFromCenterZ * distFromCenterZ);
+        
+        // Very natural falloff - smooth probability-based filtering
+        // Create organic, irregular edges like real data distribution
+        const baseFalloff = 1.5; // Start falloff closer to strike zone
+        if (normalizedDist > baseFalloff) {
+          const excessDist = normalizedDist - baseFalloff;
+          // Softer exponential falloff with more randomness
+          const noise = Math.sin(gx * 2.3) * Math.cos(gy * 1.7) * 0.15; // Perlin-like noise
+          const showProbability = Math.exp(-excessDist * 1.8) * (0.5 + Math.random() * 0.5 + noise);
+          if (Math.random() > showProbability) continue;
+        }
+        
+        // Additional scattered filtering for very natural look
+        if (normalizedDist > 1.2 && Math.random() > 0.85) continue;
+        
+        const px = plateXToPixel(plateX);
+        const py = plateZToPixel(plateZ);
+        
+        // Scale intensity based on actual EV ranges (positive: 0-0.74, negative: 0 to -0.34)
+        const isPositive = avgEV >= 0;
+        
+        // More sensitive normalization for better color variety
+        let normalized;
+        if (isPositive) {
+          // For positive EV: 0.05 = weak, 0.2 = medium, 0.4+ = strong
+          normalized = Math.min(avgEV / 0.5, 1);
+        } else {
+          // For negative EV: -0.05 = weak, -0.15 = medium, -0.3+ = strong
+          normalized = Math.min(Math.abs(avgEV) / 0.35, 1);
+        }
+        
+        // More responsive intensity curve - less smoothing for more variety
+        const intensity = Math.pow(normalized, 0.4); // Lower exponent = more sensitivity
+        
+        // Radius scales with intensity - blue smaller, red slightly bigger
+        const radiusMultiplier = isPositive ? 0.75 : 1.25;
+        const radius = baseRadius * (0.8 + intensity * 0.5) * radiusMultiplier;
+        
+        // Adjust alpha based on data density
+        const densityFactor = Math.sqrt(cell.count / maxCount);
+        const densityPenalty = 1 - (densityFactor * 0.2);
+        
+        // Much wider alpha range for dramatic variety
+        // Weak values: translucent, Medium values: semi-opaque, Strong values: very opaque
+        const minAlpha = 0.03;  // Very translucent for weak signals
+        const maxAlpha = 0.25;  // Much more opaque for strong signals
+        const alpha = (minAlpha + intensity * maxAlpha) * densityPenalty; // 0.024 to 0.22
+        
+        // Create radial gradient
+        const gradient = ctx.createRadialGradient(px, py, 0, px, py, radius);
+        
+        if (isPositive) {
+          // Highly saturated deep blue
+          gradient.addColorStop(0, `rgba(40, 110, 255, ${alpha})`);
+          gradient.addColorStop(0.5, `rgba(40, 110, 255, ${alpha * 0.5})`);
+          gradient.addColorStop(1, "rgba(40, 110, 255, 0)");
+        } else {
+          // Very vibrant red for negative EV
+          gradient.addColorStop(0, `rgba(255, 50, 140, ${alpha})`);
+          gradient.addColorStop(0.5, `rgba(255, 50, 140, ${alpha * 0.5})`);
+          gradient.addColorStop(1, "rgba(255, 50, 140, 0)");
+        }
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(px - radius, py - radius, radius * 2, radius * 2);
       }
-
-      ctx.fillStyle = gradient;
-      ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-    });
+    }
 
     ctx.restore();
 
@@ -199,16 +280,16 @@ const baseRadius = Math.min(zoneWidth, zoneHeight) * 0.18;
       haloRadius,
       zoneCenterX,
       zoneCenterY,
-      haloRadius * 3.4
+      haloRadius * 1.6
     );
     haloGradient.addColorStop(0, "rgba(90, 132, 255, 0.07)");
     haloGradient.addColorStop(1, "rgba(90, 132, 255, 0)");
     ctx.fillStyle = haloGradient;
     ctx.fillRect(
-      zoneX - haloRadius * 2.2,
-      zoneY - haloRadius * 2,
-      zoneWidth + haloRadius * 4.4,
-      zoneHeight + haloRadius * 4
+      zoneX - haloRadius * 0.8,
+      zoneY - haloRadius * 0.7,
+      zoneWidth + haloRadius * 1.6,
+      zoneHeight + haloRadius * 1.4
     );
     ctx.restore();
 
