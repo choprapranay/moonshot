@@ -1,8 +1,12 @@
 import json
 import os
+import sys
 import warnings
 import pickle
 from pathlib import Path
+
+project_root = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(project_root))
 
 import pybaseball
 import torch
@@ -14,6 +18,7 @@ from numpy import dtype as numpy_dtype
 from numpy import dtypes as numpy_dtypes
 from numpy.core.multiarray import _reconstruct as numpy_reconstruct
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from pybaseball import statcast
 
 from backend.infrastructure.model_storage import ModelStorage
 from backend.services.dataset_loader_service import DatasetLoaderService
@@ -29,7 +34,7 @@ except ImportError:
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 def load_run_values(): 
-    with open('run_values.json', 'r') as file: 
+    with open('./backend/expected-value-calculations/run_values.json', 'r') as file: 
         run_values = json.load(file)
         return run_values
     
@@ -220,8 +225,8 @@ def preprocess_data(dataset, artifacts):
 
 
 def generate_heatmap_data():
-
-    dataset = DatasetLoaderService().get_training_dataset()
+    dataset = statcast('2023-03-30', '2024-11-02')
+    #dataset = DatasetLoaderService().get_training_dataset()
     artifacts = load_model_and_artifacts()
     pruned_data = preprocess_data(dataset, artifacts)
     model = artifacts['model']

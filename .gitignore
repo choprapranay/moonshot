@@ -23,3 +23,7 @@ Thumbs.db
 
 node_modules/
 .env
+
+# Large generated files
+backend/expected-value-calculations/heatmap_output.json
+heatmap_output.json
