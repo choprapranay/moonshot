@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 type HeatmapPoint = {
   plate_x: number;
@@ -20,6 +20,10 @@ type StrikeZoneHeatmapProps = {
   selectedSwingIndex?: number | null;
 };
 
+export type StrikeZoneHeatmapRef = {
+  exportHeatmap: () => void;
+};
+
 const STRIKE_ZONE_HALF_WIDTH = 0.708; // 17 inches / 24
 const STRIKE_ZONE_BOTTOM = 1.5;
 const STRIKE_ZONE_TOP = 3.5;
@@ -34,12 +38,12 @@ const VERTICAL_EXTENT_BOTTOM = STRIKE_ZONE_BOTTOM - 0.8;
 const HORIZONTAL_FALLOFF = STRIKE_ZONE_HALF_WIDTH + 0.3; // ~1 inch bleed
 const VERTICAL_FALLOFF = STRIKE_ZONE_HEIGHT / 2 + 0.35;
 
-export function StrikeZoneHeatmap({
+export const StrikeZoneHeatmap = forwardRef<StrikeZoneHeatmapRef, StrikeZoneHeatmapProps>(({
   heatmap,
   swings,
   onSwingClick,
   selectedSwingIndex,
-}: StrikeZoneHeatmapProps) {
+}, ref) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [dimensions, setDimensions] = useState<{ width: number; height: number }>({
@@ -336,6 +340,58 @@ export function StrikeZoneHeatmap({
     return { plateXToPixel, plateZToPixel };
   }, [dimensions]);
 
+  // Expose export function to parent component
+  useImperativeHandle(ref, () => ({
+    exportHeatmap: () => {
+      const canvas = canvasRef.current;
+      if (!canvas || !zoneLayout) return;
+
+      // Create a temporary canvas to include swing dots
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = canvas.width;
+      tempCanvas.height = canvas.height;
+      const tempCtx = tempCanvas.getContext('2d');
+      if (!tempCtx) return;
+
+      // Copy the original canvas (heatmap)
+      tempCtx.drawImage(canvas, 0, 0);
+
+      // Draw swing dots on top
+      const dpr = window.devicePixelRatio || 1;
+      swings.forEach((swing) => {
+        const x = zoneLayout.plateXToPixel(swing.plate_x) * dpr;
+        const y = zoneLayout.plateZToPixel(swing.plate_z) * dpr;
+
+        // Draw outer glow circle
+        tempCtx.beginPath();
+        tempCtx.arc(x, y, 9 * dpr, 0, 2 * Math.PI);
+        tempCtx.fillStyle = 'rgba(74, 108, 247, 0.25)';
+        tempCtx.fill();
+
+        // Draw inner white circle with blue border
+        tempCtx.beginPath();
+        tempCtx.arc(x, y, 6 * dpr, 0, 2 * Math.PI);
+        tempCtx.fillStyle = '#f8f9ff';
+        tempCtx.fill();
+        tempCtx.strokeStyle = '#4a6cf7';
+        tempCtx.lineWidth = 2 * dpr;
+        tempCtx.stroke();
+      });
+
+      // Convert to blob and download
+      tempCanvas.toBlob((blob) => {
+        if (!blob) return;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+        link.download = `heatmap-${timestamp}.png`;
+        link.href = url;
+        link.click();
+        URL.revokeObjectURL(url);
+      }, 'image/png');
+    },
+  }), [swings, zoneLayout]);
+
   return (
     <div ref={containerRef} className="relative flex h-full w-full flex-col overflow-hidden rounded-2xl">
       <canvas ref={canvasRef} className="absolute inset-0" />
@@ -408,5 +464,7 @@ export function StrikeZoneHeatmap({
       </div>
     </div>
   );
-}
+});
+
+StrikeZoneHeatmap.displayName = "StrikeZoneHeatmap";
 
