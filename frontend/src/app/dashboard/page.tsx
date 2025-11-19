@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { StrikeZoneHeatmap, type StrikeZoneHeatmapRef } from "@/components/StrikeZoneHeatmap";
 
@@ -92,7 +92,7 @@ async function fetchGameAnalysis(gameId: string): Promise<GameAnalysisResponse> 
   return response.json();
 }
 
-export default function Dashboard() {
+function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const gameIdParam = searchParams.get("gameId");
@@ -602,6 +602,21 @@ export default function Dashboard() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div
+        className="relative min-h-screen overflow-hidden text-white flex items-center justify-center"
+        style={{ backgroundColor: "#07090f" }}
+      >
+        <p style={{ color: "#d6daf6" }}>Loading dashboard…</p>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
 
