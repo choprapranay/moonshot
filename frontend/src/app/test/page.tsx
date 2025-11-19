@@ -36,7 +36,7 @@ export default function TestPage() {
     setError("");
 
     try {
-      const response = await fetch(`http://127.0.0.1:8000/game-data/${gameId}`);
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000"}/game-data/${gameId}`);
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
