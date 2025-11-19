@@ -1,5 +1,9 @@
 {
   "devDependencies": {
     "supabase": "^2.48.3"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": "22.x"
   }
 }

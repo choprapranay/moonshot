@@ -458,7 +458,7 @@ export const StrikeZoneHeatmap = forwardRef<StrikeZoneHeatmapRef, StrikeZoneHeat
           <span>Negative EV (take)</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full border-2 border-[#4a6cf7] bg-white" />
+          <span className="h-3 w-3 rounded-full border-2 border-[#4a6cf7] bg-white" />
           <span>Swings (selected game)</span>
         </div>
       </div>
