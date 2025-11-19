@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { StrikeZoneHeatmap } from "@/components/StrikeZoneHeatmap";
+import { StrikeZoneHeatmap, type StrikeZoneHeatmapRef } from "@/components/StrikeZoneHeatmap";
 
 type TeamInfo = {
   code: string;
@@ -107,6 +107,7 @@ export default function Dashboard() {
   const [heatmapLoading, setHeatmapLoading] = useState(false);
   const [heatmapError, setHeatmapError] = useState<string | null>(null);
   const [selectedSwingIndex, setSelectedSwingIndex] = useState<number | null>(null);
+  const heatmapRef = useRef<StrikeZoneHeatmapRef>(null);
 
   useEffect(() => {
     if (!gameIdParam) {
@@ -247,7 +248,7 @@ export default function Dashboard() {
 
       <div
         className="relative z-10 mx-auto flex h-full max-w-7xl flex-col gap-6 px-8 py-6 md:px-12 md:py-10"
-        style={{ paddingTop: "3vh", paddingBottom: "0vh" }}
+        style={{ paddingTop: "calc(3vh + 5rem)", paddingBottom: "0vh" }}
       >
         <header className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
@@ -262,6 +263,42 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => heatmapRef.current?.exportHeatmap()}
+              disabled={!heatmapData.length}
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+              style={{
+                color: "#ffffff",
+                background: "linear-gradient(135deg, #4a6cf7 0%, #3a5ce8 100%)",
+                boxShadow: "0 14px 32px rgba(74, 108, 247, 0.4)",
+                backdropFilter: "blur(26px) saturate(140%)",
+                WebkitBackdropFilter: "blur(26px) saturate(140%)",
+              }}
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 16 16"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M8 11L8 3M8 11L5.5 8.5M8 11L10.5 8.5"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M14 11V12C14 12.5304 13.7893 13.0391 13.4142 13.4142C13.0391 13.7893 12.5304 14 12 14H4C3.46957 14 2.96086 13.7893 2.58579 13.4142C2.21071 13.0391 2 12.5304 2 12V11"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <span>Export</span>
+            </button>
             <label
               className="flex items-center gap-2 rounded-full px-4 py-2 text-sm"
                style={{
@@ -407,6 +444,7 @@ export default function Dashboard() {
                     <span className="text-sm text-red-300">{heatmapError}</span>
                   ) : heatmapData.length ? (
                     <StrikeZoneHeatmap 
+                      ref={heatmapRef}
                       heatmap={heatmapData} 
                       swings={swingData}
                       onSwingClick={(swing, index) => setSelectedSwingIndex(index)}
