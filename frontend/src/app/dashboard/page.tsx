@@ -84,6 +84,7 @@ function getPitchTypeName(abbreviation: string | null | undefined): string {
 }
 
 async function fetchGameAnalysis(gameId: string): Promise<GameAnalysisResponse> {
+  console.log(`${API_BASE_URL}/game/${gameId}/analysis`); 
   const response = await fetch(`${API_BASE_URL}/game/${gameId}/analysis`);
   if (!response.ok) {
     const detail = await response.text();

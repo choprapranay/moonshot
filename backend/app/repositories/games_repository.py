@@ -1,9 +1,10 @@
 from typing import Any, Dict, Optional
 
-from app.db.database import supabase
+from app.db.database import get_supabase_client
 
 
 def get_game_by_pk(game_pk: int) -> Optional[Dict[str, Any]]:
+   supabase = get_supabase_client()
    resp = (
       supabase
          .table("games")
@@ -18,10 +19,12 @@ def get_game_by_pk(game_pk: int) -> Optional[Dict[str, Any]]:
 
 
 def upsert_game(payload: Dict[str, Any]) -> None:
+   supabase = get_supabase_client()
    supabase.table("games").upsert(payload, on_conflict="game_pk").execute()
 
 
 def get_game_id_by_pk(game_pk: int) -> str:
+   supabase = get_supabase_client()
    return (
       supabase
          .table("games")
