@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { StrikeZoneHeatmap, type StrikeZoneHeatmapRef } from "@/components/StrikeZoneHeatmap";
 
@@ -92,7 +92,7 @@ async function fetchGameAnalysis(gameId: string): Promise<GameAnalysisResponse> 
   return response.json();
 }
 
-export default function Dashboard() {
+function DashboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const gameIdParam = searchParams.get("gameId");
@@ -169,7 +169,6 @@ export default function Dashboard() {
     const abort = new AbortController();
     setHeatmapLoading(true);
     setHeatmapError(null);
-
     fetch(`${API_BASE_URL}/game/${gameIdParam}/player/${selectedPlayerId}/heatmap`, {
       signal: abort.signal,
     })
@@ -551,7 +550,7 @@ export default function Dashboard() {
                   </dl>
 
                   <div
-                     className="mt-auto rounded-xl p-4"
+                     className="mt-auto rounded-xl py-4"
                      style={{
                        background: "rgba(4, 7, 18, 0.5)",
                        boxShadow: "0 18px 44px rgba(2, 4, 10, 0.64)",
@@ -575,7 +574,12 @@ export default function Dashboard() {
                             Description
                           </dt>
                           <dd className="mt-1 text-lg font-semibold text-white">
-                            {swingData[selectedSwingIndex].description || "—"}
+                            {swingData[selectedSwingIndex].description
+                              ? swingData[selectedSwingIndex].description
+                                  .split("_")
+                                  .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+                                  .join(" ")
+                              : "—"}
                           </dd>
                         </div>
                       </div>
@@ -597,6 +601,21 @@ export default function Dashboard() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={
+      <div
+        className="relative min-h-screen overflow-hidden text-white flex items-center justify-center"
+        style={{ backgroundColor: "#07090f" }}
+      >
+        <p style={{ color: "#d6daf6" }}>Loading dashboard…</p>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }
 
