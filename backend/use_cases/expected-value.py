@@ -18,7 +18,6 @@ from numpy import dtype as numpy_dtype
 from numpy import dtypes as numpy_dtypes
 from numpy.core.multiarray import _reconstruct as numpy_reconstruct
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from pybaseball import statcast
 from backend.infrastructure.pybaseball_repository import PyBaseballRepository
 from backend.infrastructure.model_storage import ModelStorage
 from backend.services.dataset_loader_service import DatasetLoaderService
