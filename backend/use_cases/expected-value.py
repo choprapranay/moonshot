@@ -24,8 +24,8 @@ from backend.infrastructure.model_storage import ModelStorage
 from backend.services.dataset_loader_service import DatasetLoaderService
 from neuralnets.modeltrain import SuperModel, swing_type
 from backend.infrastructure.run_value_repository import RunValueRepository
-from backend.expected_value_calculations.ev_calculation import EVCalculator
-from backend.expected_value_calculations.heatmap_generator import HeatmapGenerator
+from backend.domain.ev_calculation import EVCalculator
+from backend.use_cases.heatmap_generator import HeatmapGenerator
 
 try:
     from torch.serialization import add_safe_globals, safe_globals

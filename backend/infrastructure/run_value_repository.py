@@ -9,7 +9,7 @@ class RunValueRepository:
         if file_path is None:
             # Default: expected-value-calculations/run_values.json
             backend_dir = Path(__file__).resolve().parent.parent
-            file_path = backend_dir / "expected-value-calculations" / "run_values.json"
+            file_path = backend_dir / "use_cases" / "run_values.json"
         
         self.file_path = Path(file_path)
         self._run_values = None

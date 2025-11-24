@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 from backend.infrastructure.pybaseball_repository import PyBaseballRepository
-from backend.expected_value_calculations.run_value_calculator import RunValueCalculator
+from backend.domain.run_value_calculator import RunValueCalculator
 
 
 def load_season_safe(repo: PyBaseballRepository, year) -> pd.DataFrame:
@@ -33,8 +33,8 @@ def main():
 
     repo = PyBaseballRepository()
 
-    data_2023 = load_season_safe(2023)
-    data_2024 = load_season_safe(2024)
+    data_2023 = load_season_safe(repo, 2023)
+    data_2024 = load_season_safe(repo, 2024)
 
     data = pd.concat([data_2023, data_2024], ignore_index=True)
 
@@ -46,3 +46,8 @@ def main():
 
     with open('run_values.json', 'w') as f:
         json.dump(run_values, f, indent=2)
+
+if __name__ == "__main__":
+    main()
+
+    
