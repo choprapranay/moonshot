@@ -18,11 +18,13 @@ from numpy import dtype as numpy_dtype
 from numpy import dtypes as numpy_dtypes
 from numpy.core.multiarray import _reconstruct as numpy_reconstruct
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from pybaseball import statcast
-
+from backend.infrastructure.pybaseball_repository import PyBaseballRepository
 from backend.infrastructure.model_storage import ModelStorage
 from backend.services.dataset_loader_service import DatasetLoaderService
 from neuralnets.modeltrain import SuperModel, swing_type
+from backend.infrastructure.run_value_repository import RunValueRepository
+from backend.domain.ev_calculation import EVCalculator
+from backend.use_cases.heatmap_generator import HeatmapGenerator
 
 try:
     from torch.serialization import add_safe_globals, safe_globals
@@ -32,32 +34,6 @@ except ImportError:
 
 # Silence noisy FutureWarnings emitted by third-party dependencies (e.g., pandas, pybaseball).
 warnings.filterwarnings("ignore", category=FutureWarning)
-
-def load_run_values(): 
-    with open('./backend/expected-value-calculations/run_values.json', 'r') as file: 
-        run_values = json.load(file)
-        return run_values
-    
-RUN_VALUES = load_run_values()
-
-SWING_OUTCOMES = {'home_run', 'triple', 'double', 'single', 'field_out', 
-                  'grounded_into_double_play', 'strikeout', 'swinging_strike',
-                  'foul', 'force_out', 'sac_fly', 'field_error'}
-
-TAKE_OUTCOMES = {'ball', 'walk', 'hit_by_pitch', 'called_strike'}
-
-def calculate_ev(probability_dict, outcome_set): 
-    total_prob = sum(probability_dict.get(outcome, 0) for outcome in outcome_set)
-    if total_prob == 0:
-        return 0.0
-    
-    ev = 0
-    for outcome in outcome_set:
-        if outcome in probability_dict and outcome in RUN_VALUES:
-            normalized_prob = probability_dict[outcome] / total_prob
-            ev += normalized_prob * RUN_VALUES[outcome]
-    return ev
-
 
 def load_model_and_artifacts(model_path = "./neuralnets/batter_outcome_model.pth"):
 
@@ -146,135 +122,101 @@ def load_model_and_artifacts(model_path = "./neuralnets/batter_outcome_model.pth
     }
 
 def preprocess_data(dataset, artifacts):
-    shortened_data = dataset[['batter', 'pitch_type', 'description', 'plate_x', 'plate_z', 
-                               'events', 'release_speed', 'release_pos_x', 'launch_speed', 
-                               'launch_angle', 'effective_speed', 'release_spin_rate', 
-                               'release_extension', 'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0', 
-                               'ax', 'ay', 'az', 'sz_top', 'sz_bot', 
-                               'estimated_ba_using_speedangle', 'launch_speed_angle']]
+    """Preprocess raw pitch data for model input."""
+    shortened_data = dataset[[
+        'batter', 'pitch_type', 'description', 'plate_x', 'plate_z',
+        'events', 'release_speed', 'release_pos_x', 'launch_speed',
+        'launch_angle', 'effective_speed', 'release_spin_rate',
+        'release_extension', 'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0',
+        'ax', 'ay', 'az', 'sz_top', 'sz_bot',
+        'estimated_ba_using_speedangle', 'launch_speed_angle'
+    ]]
     
     pruned_data = shortened_data.copy()
-
     
     both_na = pruned_data['hc_x'].isna() & pruned_data['hc_y'].isna()
     both_na_2 = pruned_data['launch_speed'].isna() & pruned_data['launch_angle'].isna()
     both_na_3 = pruned_data['launch_speed_angle'].isna() & pruned_data['estimated_ba_using_speedangle'].isna()
-
+    
     pruned_data['outcome_text'] = pruned_data['events']
     pruned_data['outcome_text'] = pruned_data['description'].where(both_na, pruned_data['events'])
-
+    
     pruned_data.loc[both_na, 'hc_x'] = 0
     pruned_data.loc[both_na, 'hc_y'] = 0
     pruned_data.loc[both_na_2, 'launch_speed'] = 0
     pruned_data.loc[both_na_2, 'launch_angle'] = 0
     pruned_data.loc[both_na_3, 'launch_speed_angle'] = 0
     pruned_data.loc[both_na_3, 'estimated_ba_using_speedangle'] = 0
-
+    
     pruned_data = pruned_data.dropna(subset=['outcome_text'])
     pruned_data['batting_pattern'] = pruned_data['outcome_text'].apply(swing_type)
     pruned_data = pruned_data.dropna(subset=['batting_pattern'])
     
-    feature_cols = ['release_speed', 'release_pos_x', 'plate_x', 'plate_z', 'launch_speed', 
-                    'launch_angle', 'effective_speed', 'release_spin_rate', 'release_extension', 
-                    'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0', 'ax', 'ay', 'az', 'estimated_ba_using_speedangle']
+    feature_cols = [
+        'release_speed', 'release_pos_x', 'plate_x', 'plate_z', 'launch_speed',
+        'launch_angle', 'effective_speed', 'release_spin_rate', 'release_extension',
+        'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0', 'ax', 'ay', 'az', 'estimated_ba_using_speedangle'
+    ]
     
     pruned_data = pruned_data.dropna(subset=feature_cols)
-
+    
     batter_enc = artifacts['batter_encoder']
     pitch_enc = artifacts['pitch_encoder']
     outcome_enc = artifacts['outcome_encoder']
     batter_pattern_enc = artifacts['batter_pattern_encoder']
     launch_speed_angle_enc = artifacts['launch_speed_angle_encoder']
     scaler = artifacts['scaler']
-
+    
     known_batters = set(batter_enc.classes_)
     pruned_data = pruned_data[pruned_data['batter'].isin(known_batters)]
     print(f"Rows after batter filtering: {len(pruned_data)}")
     if len(pruned_data) == 0:
         raise ValueError("No known batters found in dataset")
     pruned_data['batter_id'] = batter_enc.transform(pruned_data['batter'])
-
+    
     known_outcomes = set(outcome_enc.classes_)
     pruned_data = pruned_data[pruned_data['outcome_text'].isin(known_outcomes)]
     print(f"Rows after outcome filtering: {len(pruned_data)}")
     if len(pruned_data) == 0:
         raise ValueError("No known outcomes found in dataset")
     pruned_data['outcome_id'] = outcome_enc.transform(pruned_data['outcome_text'])
-
-
+    
     known_pitches = set(pitch_enc.classes_)
     pruned_data = pruned_data[pruned_data['pitch_type'].isin(known_pitches)]
     print(f"Rows after pitch type filtering: {len(pruned_data)}")
     if len(pruned_data) == 0:
         raise ValueError("No known pitch types found in dataset")
     pruned_data['pitch_type_id'] = pitch_enc.transform(pruned_data['pitch_type'])
-
+    
     known_patterns = set(batter_pattern_enc.classes_)
     pruned_data = pruned_data[pruned_data['batting_pattern'].isin(known_patterns)]
-
+    
     pruned_data['batting_pattern_id'] = batter_pattern_enc.transform(pruned_data['batting_pattern'])
-
     pruned_data['launch_speed_angle_id'] = launch_speed_angle_enc.transform(pruned_data['launch_speed_angle'])
-
+    
     pruned_data[feature_cols] = scaler.transform(pruned_data[feature_cols].astype(float))
-
+    
     pruned_data = pruned_data.replace([np.inf, -np.inf], np.nan)
     pruned_data = pruned_data.dropna(subset=feature_cols)
-
+    
     return pruned_data
 
+def main():
 
-def generate_heatmap_data():
-    dataset = statcast('2023-03-30', '2024-11-02')
-    #dataset = DatasetLoaderService().get_training_dataset()
+    repo = PyBaseballRepository()
+    dataset = repo.fetch_pitch_data('2023-03-30', '2024-11-02')
     artifacts = load_model_and_artifacts()
-    pruned_data = preprocess_data(dataset, artifacts)
-    model = artifacts['model']
-    device = artifacts['device']
-    outcome_labels = artifacts['outcome_labels']
 
+    processed_data = preprocess_data(dataset, artifacts)
+
+    run_value_repo = RunValueRepository()
+    run_values = run_value_repo.load_run_values()
+
+    ev_calculator = EVCalculator(run_values)
+    heatmap_gen = HeatmapGenerator(model=artifacts['model'], device=artifacts['device'], outcome_labels=artifacts['outcome_labels'], ev_calculator=ev_calculator)
     
+    heatmap_dict = heatmap_gen.generate(processed_data)
 
-    feature_cols_model = ['release_speed', 'release_pos_x', 'plate_x', 'plate_z', 
-                        'launch_speed', 'launch_angle', 'effective_speed', 
-                        'release_spin_rate', 'release_extension', 'batting_pattern_id', 
-                        'launch_speed_angle_id', 'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0', 
-                        'ax', 'ay', 'az', 'estimated_ba_using_speedangle']
-
-    heatmap_dict = {}   
-    unique_batters = pruned_data['batter_id'].unique()
-
-    for idx, batter_id in enumerate(unique_batters):
-        heatmap_dict[batter_id] = {}
-        batter_pitches = pruned_data[pruned_data['batter_id'] == batter_id]
-
-        for index, row in batter_pitches.iterrows():
-            features = torch.tensor(
-                row[feature_cols_model].values.astype(np.float32),
-                dtype=torch.float32
-            ).unsqueeze(0).to(device)
-
-            batter_tensor = torch.tensor([batter_id], dtype=torch.long).to(device)
-            pitch_type_tensor = torch.tensor([int(row['pitch_type_id'])], dtype=torch.long).to(device)
-            
-            with torch.no_grad():
-                logits = model(batter_tensor, pitch_type_tensor, features)
-                probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
-
-            prob_dict = {outcome_labels[i]: probs[i] for i in range(len(outcome_labels))}
-
-            ev_swing = calculate_ev(prob_dict, SWING_OUTCOMES)
-            ev_take = calculate_ev(prob_dict, TAKE_OUTCOMES)
-            ev_diff = ev_swing - ev_take
-
-            coord = (float(row['plate_x']), float(row['plate_z']))
-            heatmap_dict[batter_id][coord] = ev_diff
-    
-    return heatmap_dict
-
-
-if __name__ == "__main__":
-    heatmap_dict = generate_heatmap_data()
     serialized = {
         int(batter_id): [
             {
@@ -296,5 +238,6 @@ if __name__ == "__main__":
             default=lambda o: float(o) if isinstance(o, (np.floating, np.integer)) else o,
         )
 
-    print(f"Saved heatmap data to {output_path}")
+if __name__ == "__main__":
+    main()
 
