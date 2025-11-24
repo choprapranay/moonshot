@@ -1,7 +1,7 @@
 import pandas as pd
 import json
 from backend.infrastructure.pybaseball_repository import PyBaseballRepository
-from backend.domain.run_value_calculator import RunValueCalculator
+from backend.domain.run_value_calculation import RunValueCalculator
 
 
 def load_season_safe(repo: PyBaseballRepository, year) -> pd.DataFrame:
