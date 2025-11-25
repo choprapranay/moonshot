@@ -1,40 +1,83 @@
-import torch
-from torch.utils.data import Dataset
-from torch.utils.data import DataLoader
-from domain.entities import DatasetSplit
+"""
+PyTorch Dataset Adapter
+Implements the DatasetAdapterInterface for creating PyTorch datasets.
+"""
 
-class SuperDataSet(Dataset):
-    def __init__(self, batter_ids, pitch_type_ids, features, targets):
-        self.batter_ids = torch.from_numpy(batter_ids).long()
-        self.pitch_type_ids = torch.from_numpy(pitch_type_ids).long()
-        self.features = torch.from_numpy(features).float()
-        self.targets = torch.from_numpy(targets).long()
+import torch
+from torch.utils.data import Dataset, DataLoader
+import pandas as pd
+import numpy as np
+from typing import Any
+
+from domain.interfaces import DatasetAdapterInterface
+
+
+class BatterDataset(Dataset):
+    FEATURE_COLUMNS = [
+        'release_speed', 'release_pos_x', 'plate_x', 'plate_z', 
+        'launch_speed', 'launch_angle', 'effective_speed', 
+        'release_spin_rate', 'release_extension', 'batting_pattern_id',
+        'launch_speed_angle_id', 'hc_x', 'hc_y', 'vx0', 'vy0', 
+        'vz0', 'ax', 'ay', 'az', 'estimated_ba_using_speedangle'
+    ]
     
-    def __getitem__(self, index):
-        batter_id = self.batter_ids[index]
-        pitch_type_id = self.pitch_type_ids[index]
-        features = self.features[index]
-        y = self.targets[index]
+    def __init__(self, df: pd.DataFrame):
+        self.df = df.reset_index(drop=True)
+    
+    def __getitem__(self, index: int):
+        row = self.df.loc[index]
+        
+        batter_id = int(row['batter_id'])
+        pitch_type_id = int(row['pitch_type_id'])
+        
+        features = torch.tensor(row[self.FEATURE_COLUMNS].values.astype(np.float32), dtype=torch.float32)
+        
+        y = int(row['outcome_id'])
+        
         return batter_id, pitch_type_id, features, y
     
-    def __len__(self):
-        return self.targets.shape[0]
+    def __len__(self) -> int:
+        return len(self.df)
 
-def build_dataloaders(split: DatasetSplit, batch_size: int):
 
-    train_ds = SuperDataSet(
-        split.batter_ids_train,
-        split.pitch_type_ids_train,
-        split.features_train,
-        split.y_train,
-    )
-    val_ds = SuperDataSet(
-        split.batter_ids_val,
-        split.pitch_type_ids_val,
-        split.features_val,
-        split.y_val,
-    )
+class InferenceDataset(Dataset):
+    FEATURE_COLUMNS = [
+        'release_speed', 'release_pos_x', 'plate_x', 'plate_z', 
+        'launch_speed', 'launch_angle', 'effective_speed', 
+        'release_spin_rate', 'release_extension', 'batting_pattern_id',
+        'launch_speed_angle_id', 'hc_x', 'hc_y', 'vx0', 'vy0', 
+        'vz0', 'ax', 'ay', 'az', 'estimated_ba_using_speedangle'
+    ]
+    
+    def __init__(self, df: pd.DataFrame):
+        self.df = df.reset_index(drop=True)
+    
+    def __getitem__(self, index: int):
+        row = self.df.loc[index]
+        
+        batter_id = int(row['batter_id'])
+        pitch_type_id = int(row['pitch_type_id'])
+        
+        features = torch.tensor(row[self.FEATURE_COLUMNS].values.astype(np.float32), dtype=torch.float32)
+        
+        batter_name = row['batter']
+        pitch_type = row['pitch_type']
+        actual_outcome = row.get('outcome_text', None)
+        
+        return batter_id, pitch_type_id, features, batter_name, pitch_type, actual_outcome
+    
+    def __len__(self) -> int:
+        return len(self.df)
 
-    train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
-    val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
-    return train_loader, val_loader
+
+class TorchDatasetAdapter(DatasetAdapterInterface):
+    def __init__(self):
+        pass
+    
+    def create_dataset(self, df: pd.DataFrame, for_inference: bool = False) -> Dataset:
+        if for_inference:
+            return InferenceDataset(df)
+        return BatterDataset(df)
+    
+    def create_dataloader(self, dataset: Dataset, batch_size: int, shuffle: bool = True) -> DataLoader:
+        return DataLoader(dataset, batch_size=batch_size, shuffle=shuffle)

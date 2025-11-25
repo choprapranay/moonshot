@@ -131,7 +131,7 @@ def main():
     
     print("\nLoading data...")
     dataset = DatasetLoaderService().get_training_dataset() #THE IMPORT CHANGE
-    #batter_info = pybaseball.statcast('2023-03-30', '2023-10-01')
+    #batter_info = pybaseball.statcast('2023-04-01', '2023-04-03')
     #batter_info_2024 = pybaseball.statcast('2024-03-28', '2024-09-29')
     #batter_info = pd.concat([batter_info, batter_info_2024], ignore_index=True)
 
