@@ -8,7 +8,7 @@ from fastapi import HTTPException
 
 from pybaseball import statcast_single_game
 
-from app.schemas.game_analysis import (
+from app.api.schemas.game_analysis import (
     GameAnalysisResponse,
     PlayerStats,
     PlayerSummary,
@@ -36,7 +36,6 @@ def _normalize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     clean_df = clean_df.where(pd.notnull(clean_df), None)
     clean_df = clean_df.copy()
 
-    # Determine batter team based on inning context
     clean_df["team_at_bat"] = clean_df.apply(
         lambda row: _resolve_team_for_plate_appearance(
             row.get("inning_topbot"), row.get("home_team"), row.get("away_team")
@@ -44,7 +43,6 @@ def _normalize_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         axis=1,
     )
 
-    # ensure batter id numeric
     clean_df["batter_id"] = pd.to_numeric(clean_df.get("batter"), errors="coerce")
 
     return clean_df
@@ -98,7 +96,6 @@ def _compute_player_stats(group: pd.DataFrame) -> PlayerStats:
     average_velocity = group.get("release_speed").dropna().astype(float).mean()
     avg_velocity_value = float(round(average_velocity, 1)) if pd.notnull(average_velocity) else None
 
-    # Get batter handedness (should be consistent for a single batter)
     stand_series = group.get("stand", pd.Series(dtype=str))
     batter_handedness = None
     if not stand_series.empty and stand_series.notna().any():
@@ -118,7 +115,6 @@ def _compute_player_stats(group: pd.DataFrame) -> PlayerStats:
 
 
 def _calculate_impact_delta(group: pd.DataFrame, swing_mask: pd.Series) -> float | None:
-    # Placeholder: real calculation will be implemented later
     return None
 
 

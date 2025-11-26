@@ -14,7 +14,7 @@ MODEL_FILENAME = "neuralnet/batter_outcome_model.pth"
 
 
 def _model_path() -> Path:
-    backend_root = Path(__file__).resolve().parents[2]
+    backend_root = Path(__file__).resolve().parents[3]
     model_path = backend_root / MODEL_FILENAME
     if not model_path.exists():
         raise HTTPException(status_code=500, detail="Batter encoder model file not found")
@@ -38,6 +38,5 @@ def encode_batter_id(raw_batter_id: int) -> Optional[int]:
         encoded = encoder.transform([raw_batter_id])
         return int(encoded[0])
     except ValueError:
-        # Batter not present in training set
         return None
 

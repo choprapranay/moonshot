@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException
 
-from app.schemas.game_analysis import GameAnalysisResponse, PlayerHeatmapResponse
-from app.services.game_analysis import (
+from app.api.schemas.game_analysis import GameAnalysisResponse, PlayerHeatmapResponse
+from app.infrastructure.services.game_analysis_service import (
     build_game_analysis,
     build_pitch_records,
     get_batter_swings,
 )
-from app.services.heatmap import get_heatmap_for_batter
-from app.services.encoders import encode_batter_id
+from app.infrastructure.services.heatmap_service import get_heatmap_for_batter
+from app.infrastructure.services.encoder_service import encode_batter_id
 
 
 router = APIRouter()
