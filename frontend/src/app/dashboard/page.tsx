@@ -138,7 +138,17 @@ export default function Dashboard() {
     if (!selectedTeam) {
       return analysis.players;
     }
-    return analysis.players.filter((player) => player.team === selectedTeam);
+    const filteredPlayers = analysis.players.filter((player) => player.team === selectedTeam);
+
+    // Sort specific players to the front
+    filteredPlayers.sort((a, b) => {
+      // Teoscar Hernandez
+      if (a.player_id === 606192) return -1;
+      if (b.player_id === 606192) return 1;
+      return 0;
+    });
+
+    return filteredPlayers;
   }, [analysis, selectedTeam]);
 
   useEffect(() => {
@@ -561,7 +571,7 @@ export default function Dashboard() {
                    >
                     <h3 className="text-base font-semibold text-white">Swing Details</h3>
                     {selectedSwingIndex !== null && swingData[selectedSwingIndex] ? (
-                      <div className="mt-3 space-y-3">
+                      <div className="mt-3 grid grid-cols-2 gap-4">
                         <div>
                           <dt className="text-xs uppercase tracking-wide" style={{ color: "#9aa0d4" }}>
                             Pitch Type
@@ -571,6 +581,14 @@ export default function Dashboard() {
                           </dd>
                         </div>
                         <div>
+                          <dt className="text-xs uppercase tracking-wide" style={{ color: "#9aa0d4" }}>
+                            Coordinates
+                          </dt>
+                          <dd className="mt-1 text-lg font-semibold text-white">
+                            {swingData[selectedSwingIndex].plate_x.toFixed(2)}, {swingData[selectedSwingIndex].plate_z.toFixed(2)}
+                          </dd>
+                        </div>
+                        <div className="col-span-2">
                           <dt className="text-xs uppercase tracking-wide" style={{ color: "#9aa0d4" }}>
                             Description
                           </dt>

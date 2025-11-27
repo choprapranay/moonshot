@@ -19,7 +19,7 @@ HEATMAP_FILE_NAME = "heatmap_output.json"
 
 def _dataset_path() -> Path:
     backend_root = Path(__file__).resolve().parents[2]
-    dataset_path = backend_root / "expected-value-calculations" / HEATMAP_FILE_NAME
+    dataset_path = backend_root / "use_cases" / HEATMAP_FILE_NAME
     if not dataset_path.exists():
         raise HTTPException(status_code=500, detail=f"Heatmap dataset not found at {dataset_path}")
     return dataset_path
