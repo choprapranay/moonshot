@@ -10,14 +10,14 @@ from sklearn.preprocessing import LabelEncoder
 from fastapi import HTTPException
 
 
-MODEL_FILENAME = "neuralnet/batter_outcome_model.pth"
+MODEL_FILENAME = "machine_learning/neuralnet/batter_outcome_model.pth"
 
 
 def _model_path() -> Path:
     backend_root = Path(__file__).resolve().parents[3]
     model_path = backend_root / MODEL_FILENAME
     if not model_path.exists():
-        raise HTTPException(status_code=500, detail="Batter encoder model file not found")
+        raise HTTPException(status_code=500, detail=f"Batter encoder model file not found at {model_path}")
     return model_path
 
 

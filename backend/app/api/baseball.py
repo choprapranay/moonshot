@@ -4,7 +4,7 @@ from app.use_cases.fetch_game_data import FetchGameDataUseCase
 from app.infrastructure.repositories.supabase_game_repository import SupabaseGameRepository
 from app.infrastructure.repositories.supabase_pitch_repository import SupabasePitchRepository
 from app.infrastructure.repositories.supabase_player_repository import SupabasePlayerRepository
-from app.infrastructure.services.pybaseball_game_data_service import PybaseballGameDataService
+from app.infrastructure.repositories.pybaseball_game_data_service import PybaseballGameDataService
 
 router = APIRouter()
 

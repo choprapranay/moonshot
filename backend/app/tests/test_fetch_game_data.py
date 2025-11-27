@@ -7,7 +7,7 @@ from app.use_cases.fetch_game_data import FetchGameDataUseCase
 from app.infrastructure.repositories.fake_game_repository import FakeGameRepository
 from app.infrastructure.repositories.fake_pitch_repository import FakePitchRepository
 from app.infrastructure.repositories.fake_player_repository import FakePlayerRepository
-from app.infrastructure.services.fake_game_data_service import FakeGameDataService
+from app.infrastructure.repositories.fake_game_data_service import FakeGameDataService
 from app.api.schemas.baseball import FetchGameDataAndSaveResponse
 
 
