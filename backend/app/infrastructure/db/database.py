@@ -1,5 +1,5 @@
 from supabase import create_client
-from app.core.config import settings
+from app.infrastructure.core.config import settings
 
 _supabase = None
 
@@ -12,3 +12,4 @@ def get_supabase_client():
     return _supabase
 
 supabase = get_supabase_client()
+
