@@ -31,7 +31,7 @@ from presentation.cli.cli_view import CLIView, BatchView
 
 
 class CAEngine:
-    def __init__(self, data_source: str = 'pybaseball', verbose: bool = True):
+    def __init__(self, data_source: str = 'pybaseball', verbose: bool = True, model_type: str = 'standard'):
         self.view_model = ViewModel()
         
         if verbose:
@@ -45,7 +45,7 @@ class CAEngine:
             self._data_access = PybaseballDataAccess()
         
         self._preprocessor = PreprocessorAdapter()
-        self._model_adapter = ModelAdapter()
+        self._model_adapter = ModelAdapter(model_type=model_type)
         self._storage = ModelStorageAdapter()
         
         self._dataset_presenter = DatasetPresenter(self.view_model)
@@ -146,13 +146,14 @@ def run_cli(args):
     if args.mode == 'train':
         print(f"Training Configuration:")
         print(f"  Data Source: {args.data_source}")
+        print(f"  Model Type: {args.model_type}")
         print(f"  Date Range: {args.start_date} to {args.end_date}")
         print(f"  Epochs: {args.epochs}")
         print(f"  Learning Rate: {args.lr}")
         print(f"  Batch Size: {args.batch_size}")
         print(f"  Save Path: {args.save_path}")
         
-        engine = CAEngine(data_source=args.data_source, verbose=True)
+        engine = CAEngine(data_source=args.data_source, verbose=True, model_type=args.model_type)
         
         print("Building dataset...")
         dataset = engine.build_dataset(args.start_date, args.end_date)
@@ -228,6 +229,12 @@ Examples:
         choices=['pybaseball', 'supabase'],
         default='pybaseball',
         help='Data source to use (default: pybaseball)'
+    )
+    parser.add_argument(
+        '--model-type',
+        choices=['standard', 'improved'],
+        default='standard',
+        help='Model architecture: standard (faster) or improved (more accurate, slower)'
     )
     parser.add_argument(
         '--start-date',

@@ -43,24 +43,107 @@ class SuperModel(nn.Module):
         return x
 
 
+class ImprovedSuperModel(nn.Module):
+    def __init__(self, num_batters: int, num_pitch_types: int, num_input_data_types: int = 20, output_dim: int = 10,
+                 batter_embedding_dim: int = 32, pitch_embedding_dim: int = 16, hidden_dim: int = 128, dropout: float = 0.3):
+        super().__init__()
+        
+        self.batter_embedding = nn.Embedding(num_batters, batter_embedding_dim)
+        self.pitch_embedding = nn.Embedding(num_pitch_types, pitch_embedding_dim)
+        
+        self.feature_net = nn.Sequential(
+            nn.Linear(num_input_data_types, 64),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(64, 64),
+            nn.BatchNorm1d(64),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(64, 32),
+            nn.BatchNorm1d(32),
+            nn.ReLU(),
+        )
+        
+        combined_dim = batter_embedding_dim + pitch_embedding_dim + 32
+        
+        self.attention = nn.Sequential(
+            nn.Linear(combined_dim, combined_dim),
+            nn.Tanh(),
+            nn.Linear(combined_dim, combined_dim),
+            nn.Sigmoid()
+        )
+        
+        self.classifier = nn.Sequential(
+            nn.Linear(combined_dim, hidden_dim),
+            nn.BatchNorm1d(hidden_dim),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, hidden_dim // 2),
+            nn.BatchNorm1d(hidden_dim // 2),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim // 2, hidden_dim // 4),
+            nn.BatchNorm1d(hidden_dim // 4),
+            nn.ReLU(),
+            nn.Dropout(dropout / 2),
+            nn.Linear(hidden_dim // 4, output_dim)
+        )
+        
+        self._init_weights()
+    
+    def _init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.Embedding):
+                nn.init.normal_(m.weight, mean=0, std=0.1)
+    
+    def forward(self, batter_id: torch.Tensor, pitch_id: torch.Tensor, input_data: torch.Tensor) -> torch.Tensor:
+        b = self.batter_embedding(batter_id)
+        p = self.pitch_embedding(pitch_id)
+        f = self.feature_net(input_data)
+        
+        combined = torch.cat([b, p, f], dim=1)
+        
+        attention_weights = self.attention(combined)
+        combined = combined * attention_weights
+        
+        output = self.classifier(combined)
+        return output
+
+
 class ModelAdapter(ModelInterface):
-    def __init__(self, device: Optional[str] = None):
+    def __init__(self, device: Optional[str] = None, model_type: str = 'standard'):
         if device is None:
             self._device = 'cuda' if torch.cuda.is_available() else 'cpu'
         else:
             self._device = device
+        self._model_type = model_type
     
-    def create_model(self, num_batters: int, num_pitch_types: int, num_outcomes: int, device: Optional[str] = None) -> SuperModel:
+    def create_model(self, num_batters: int, num_pitch_types: int, num_outcomes: int, device: Optional[str] = None) -> nn.Module:
         use_device = device or self._device
-        model = SuperModel(
-            num_batters=num_batters,
-            num_pitch_types=num_pitch_types,
-            num_input_data_types=20,
-            output_dim=num_outcomes
-        ).to(use_device)
+        
+        if self._model_type == 'improved':
+            model = ImprovedSuperModel(
+                num_batters=num_batters,
+                num_pitch_types=num_pitch_types,
+                num_input_data_types=20,
+                output_dim=num_outcomes
+            ).to(use_device)
+        else:
+            model = SuperModel(
+                num_batters=num_batters,
+                num_pitch_types=num_pitch_types,
+                num_input_data_types=20,
+                output_dim=num_outcomes
+            ).to(use_device)
+        
         return model
     
-    def train(self, model: SuperModel, train_data: pd.DataFrame, test_data: pd.DataFrame, config: TrainingConfig, progress_callback: Optional[Callable] = None) -> Tuple[Dict[str, Any], List[Dict[str, float]]]:
+    def train(self, model: nn.Module, train_data: pd.DataFrame, test_data: pd.DataFrame, config: TrainingConfig, progress_callback: Optional[Callable] = None) -> Tuple[Dict[str, Any], List[Dict[str, float]]]:
         train_dataset = BatterDataset(train_data)
         test_dataset = BatterDataset(test_data)
         
@@ -120,7 +203,7 @@ class ModelAdapter(ModelInterface):
         
         return model.state_dict(), training_history
     
-    def _calculate_accuracy(self, model: SuperModel, data_loader: DataLoader) -> float:
+    def _calculate_accuracy(self, model: nn.Module, data_loader: DataLoader) -> float:
         model.eval()
         correct = 0
         total = 0
@@ -140,7 +223,7 @@ class ModelAdapter(ModelInterface):
         
         return correct / total if total > 0 else 0.0
     
-    def predict(self, model: SuperModel, input_data: pd.DataFrame, artifacts: ModelArtifacts, device: Optional[str] = None) -> List[Dict[str, Any]]:
+    def predict(self, model: nn.Module, input_data: pd.DataFrame, artifacts: ModelArtifacts, device: Optional[str] = None) -> List[Dict[str, Any]]:
         use_device = device or self._device
         model = model.to(use_device)
         model.eval()
@@ -171,11 +254,11 @@ class ModelAdapter(ModelInterface):
                     'predicted_outcome': labels[top_idx],
                     'confidence': float(probs[top_idx]),
                     'all_probabilities': all_probs,
-                    'actual_outcome': str(actual_outcome) if actual_outcome else None
+                    'actual_outcome': str(actual_outcome)
                 })
         
         return results
     
-    def load_model_state(self, model: SuperModel, state_dict: Dict[str, Any]) -> SuperModel:
+    def load_model_state(self, model: nn.Module, state_dict: Dict[str, Any]) -> nn.Module:
         model.load_state_dict(state_dict)
         return model
