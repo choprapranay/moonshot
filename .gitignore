@@ -4,6 +4,9 @@
 *.iws
 *.ipr
 .vscode/
+.pytest_cache/
+
+backend/venv/
 
 # Python specific files
 __pycache__/
