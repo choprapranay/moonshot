@@ -567,6 +567,7 @@ export default function Dashboard() {
                        boxShadow: "0 18px 44px rgba(2, 4, 10, 0.64)",
                        backdropFilter: "blur(36px) saturate(145%)",
                        WebkitBackdropFilter: "blur(36px) saturate(145%)",
+                       minHeight: "180px",
                      }}
                    >
                     <h3 className="text-base font-semibold text-white">Swing Details</h3>
