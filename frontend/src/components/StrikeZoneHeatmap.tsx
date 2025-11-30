@@ -213,13 +213,19 @@ export const StrikeZoneHeatmap = forwardRef<StrikeZoneHeatmapRef, StrikeZoneHeat
         if (normalizedDist > baseFalloff) {
           const excessDist = normalizedDist - baseFalloff;
           // Softer exponential falloff with more randomness
-          const noise = Math.sin(gx * 2.3) * Math.cos(gy * 1.7) * 0.15; // Perlin-like noise
-          const showProbability = Math.exp(-excessDist * 1.8) * (0.5 + Math.random() * 0.5 + noise);
-          if (Math.random() > showProbability) continue;
+          // Use seeded random-like values based on coordinates to keep it deterministic
+          const noise = Math.sin(gx * 2.3) * Math.cos(gy * 1.7) * 0.15; 
+          const seed = Math.sin(gx * 12.9898 + gy * 78.233) * 43758.5453;
+          const randomVal = seed - Math.floor(seed);
+          
+          const showProbability = Math.exp(-excessDist * 1.8) * (0.5 + randomVal * 0.5 + noise);
+          if (randomVal > showProbability) continue;
         }
         
         // Additional scattered filtering for very natural look
-        if (normalizedDist > 1.2 && Math.random() > 0.85) continue;
+        const seed2 = Math.cos(gx * 4.898 + gy * 32.23) * 23421.5453;
+        const randomVal2 = seed2 - Math.floor(seed2);
+        if (normalizedDist > 1.2 && randomVal2 > 0.85) continue;
         
         const px = plateXToPixel(plateX);
         const py = plateZToPixel(plateZ);
