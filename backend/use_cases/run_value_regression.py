@@ -47,7 +47,7 @@ def main():
     with open('run_values.json', 'w') as f:
         json.dump(run_values, f, indent=2)
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     main()
 
     

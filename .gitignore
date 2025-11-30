@@ -16,6 +16,8 @@ build/
 dist/
 *.egg-info/
 .pytest_cache/
+.coverage
+htmlcov/
 
 # Operating system specific files
 .DS_Store
