@@ -2,7 +2,7 @@ import torch
 import pandas as pd
 import numpy as np
 from typing import Dict, Tuple
-from backend.domain.ev_calculation import EVCalculator 
+from machine_learning.domain.ev_calculation import EVCalculator 
 
 class HeatmapGenerator:
    

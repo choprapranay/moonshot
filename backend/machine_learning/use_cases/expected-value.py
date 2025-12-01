@@ -1,220 +1,127 @@
 import json
-import os
 import sys
 import warnings
-import pickle
 from pathlib import Path
+from typing import Dict, Tuple
 
 project_root = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(project_root))
+sys.path.insert(0, str(project_root / "neuralnetsCA"))
 
-import pybaseball
 import torch
-import torch.nn as nn
-import pandas as pd
 import numpy as np
-from numpy import ndarray as numpy_ndarray
-from numpy import dtype as numpy_dtype
-from numpy import dtypes as numpy_dtypes
-from numpy.core.multiarray import _reconstruct as numpy_reconstruct
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from backend.infrastructure.pybaseball_repository import PyBaseballRepository
-from backend.infrastructure.model_storage import ModelStorage
-from backend.services.dataset_loader_service import DatasetLoaderService
-from neuralnets.modeltrain import SuperModel, swing_type
-from backend.infrastructure.run_value_repository import RunValueRepository
-from backend.domain.ev_calculation import EVCalculator
-from backend.use_cases.heatmap_generator import HeatmapGenerator
 
-try:
-    from torch.serialization import add_safe_globals, safe_globals
-except ImportError:  
-    add_safe_globals = None
-    safe_globals = None
+from neuralnetsCA.infrastructure.data.pybaseball_pull import PybaseballDataAccess
+from neuralnetsCA.infrastructure.data.preprocess_adapter import PreprocessorAdapter
+from neuralnetsCA.infrastructure.data.model_adapter import ModelAdapter
+from neuralnetsCA.infrastructure.storage.storage_adapter import ModelStorageAdapter
+from machine_learning.infrastructure.run_value_repository import RunValueRepository
+from machine_learning.domain.ev_calculation import EVCalculator
 
-# Silence noisy FutureWarnings emitted by third-party dependencies (e.g., pandas, pybaseball).
 warnings.filterwarnings("ignore", category=FutureWarning)
 
-def load_model_and_artifacts(model_path = "./neuralnets/batter_outcome_model.pth"):
 
-    if not os.path.exists(model_path):
-        print(f"Model not found locally at {model_path}")
-        print("Downloading from Supabase...")
-        store = ModelStorage()
-        store.download_model(
-            source_path="moonshot_v1/final_batter_outcome_model.pth",
-            dest_path=model_path
-        )
-    
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
-    extra_safe_types = [
-        LabelEncoder,
-        numpy_reconstruct,
-        numpy_ndarray,
-        numpy_dtype,
-        numpy_dtypes.Float64DType,
-        numpy_dtypes.ObjectDType,
+class HeatmapGeneratorCA:
+    FEATURE_COLS = [
+        'release_speed', 'release_pos_x', 'plate_x', 'plate_z',
+        'launch_speed', 'launch_angle', 'effective_speed',
+        'release_spin_rate', 'release_extension', 'batting_pattern_id',
+        'launch_speed_angle_id', 'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0',
+        'ax', 'ay', 'az', 'estimated_ba_using_speedangle'
     ]
 
-    load_kwargs = {
-        "map_location": device,
-        "weights_only": True,
-    }
+    def __init__(self, model, device: str, outcome_labels: list, ev_calculator: EVCalculator):
+        self.model = model
+        self.device = device
+        self.outcome_labels = outcome_labels
+        self.ev_calculator = ev_calculator
 
-    def load_with_safe_globals():
-        if safe_globals is not None:
-            with safe_globals(extra_safe_types):
-                return torch.load(model_path, **load_kwargs)
-        if add_safe_globals is not None:
-            add_safe_globals(extra_safe_types)
-            return torch.load(model_path, **load_kwargs)
-        return torch.load(model_path, map_location=device, weights_only=False)
+    def generate(self, processed_data) -> Dict[int, Dict[Tuple[float, float], float]]:
+        heatmap_dict = {}
+        unique_batters = processed_data['batter_id'].unique()
 
-    try:
-        checkpoint = load_with_safe_globals()
-    except pickle.UnpicklingError:
-        warnings.warn(
-            f"Falling back to torch.load(weights_only=False) for {model_path}. "
-            "Ensure this checkpoint is from a trusted source.",
-            RuntimeWarning,
-        )
-        checkpoint = torch.load(model_path, map_location=device, weights_only=False)
-    
-    if not isinstance(checkpoint, dict):
-        raise ValueError("Checkpoint must be a dictionary with saved artifacts")
-    
-    batter_enc = checkpoint['batter_encoder']
-    pitch_enc = checkpoint['pitch_encoder']
-    outcome_enc = checkpoint['outcome_encoder']
-    batter_pattern_enc = checkpoint['batter_pattern_encoder']
-    launch_speed_angle_enc = checkpoint['launch_speed_angle_encoder']
-    scaler = checkpoint['scaler']
-    outcome_labels = checkpoint['labels']
-    NUM_BATTERS = checkpoint['num_batters']
-    NUM_PITCHES = checkpoint['num_pitches']
-    NUM_OUTCOMES = checkpoint['num_outcomes']
+        for idx, batter_id in enumerate(unique_batters):
+            if (idx + 1) % 100 == 0:
+                print(f"Processed {idx + 1}/{len(unique_batters)} batters")
+            heatmap_dict[batter_id] = self._generate_for_batter(processed_data, batter_id)
 
-    if 'model_state_dict' in checkpoint:
-        state_dict = checkpoint['model_state_dict']
-    elif 'state_dict' in checkpoint:
-        state_dict = checkpoint['state_dict']
-    else:
-        state_dict = checkpoint
+        return heatmap_dict
 
-    model = SuperModel(NUM_BATTERS, NUM_PITCHES, 20, NUM_OUTCOMES).to(device)
-    model.load_state_dict(state_dict)
-    model.eval()
-    
-    return {
-        'model': model,
-        'device': device,
-        'batter_encoder': batter_enc,
-        'pitch_encoder': pitch_enc,
-        'outcome_encoder': outcome_enc,
-        'batter_pattern_encoder': batter_pattern_enc,
-        'launch_speed_angle_encoder': launch_speed_angle_enc,
-        'scaler': scaler,
-        'outcome_labels': outcome_labels,
-        'num_batters': NUM_BATTERS,
-        'num_pitches': NUM_PITCHES,
-        'num_outcomes': NUM_OUTCOMES
-    }
+    def _generate_for_batter(self, data, batter_id: int) -> Dict[Tuple[float, float], float]:
+        batter_pitches = data[data['batter_id'] == batter_id]
+        batter_heatmap = {}
 
-def preprocess_data(dataset, artifacts):
-    """Preprocess raw pitch data for model input."""
-    shortened_data = dataset[[
-        'batter', 'pitch_type', 'description', 'plate_x', 'plate_z',
-        'events', 'release_speed', 'release_pos_x', 'launch_speed',
-        'launch_angle', 'effective_speed', 'release_spin_rate',
-        'release_extension', 'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0',
-        'ax', 'ay', 'az', 'sz_top', 'sz_bot',
-        'estimated_ba_using_speedangle', 'launch_speed_angle'
-    ]]
-    
-    pruned_data = shortened_data.copy()
-    
-    both_na = pruned_data['hc_x'].isna() & pruned_data['hc_y'].isna()
-    both_na_2 = pruned_data['launch_speed'].isna() & pruned_data['launch_angle'].isna()
-    both_na_3 = pruned_data['launch_speed_angle'].isna() & pruned_data['estimated_ba_using_speedangle'].isna()
-    
-    pruned_data['outcome_text'] = pruned_data['events']
-    pruned_data['outcome_text'] = pruned_data['description'].where(both_na, pruned_data['events'])
-    
-    pruned_data.loc[both_na, 'hc_x'] = 0
-    pruned_data.loc[both_na, 'hc_y'] = 0
-    pruned_data.loc[both_na_2, 'launch_speed'] = 0
-    pruned_data.loc[both_na_2, 'launch_angle'] = 0
-    pruned_data.loc[both_na_3, 'launch_speed_angle'] = 0
-    pruned_data.loc[both_na_3, 'estimated_ba_using_speedangle'] = 0
-    
-    pruned_data = pruned_data.dropna(subset=['outcome_text'])
-    pruned_data['batting_pattern'] = pruned_data['outcome_text'].apply(swing_type)
-    pruned_data = pruned_data.dropna(subset=['batting_pattern'])
-    
-    feature_cols = [
-        'release_speed', 'release_pos_x', 'plate_x', 'plate_z', 'launch_speed',
-        'launch_angle', 'effective_speed', 'release_spin_rate', 'release_extension',
-        'hc_x', 'hc_y', 'vx0', 'vy0', 'vz0', 'ax', 'ay', 'az', 'estimated_ba_using_speedangle'
-    ]
-    
-    pruned_data = pruned_data.dropna(subset=feature_cols)
-    
-    batter_enc = artifacts['batter_encoder']
-    pitch_enc = artifacts['pitch_encoder']
-    outcome_enc = artifacts['outcome_encoder']
-    batter_pattern_enc = artifacts['batter_pattern_encoder']
-    launch_speed_angle_enc = artifacts['launch_speed_angle_encoder']
-    scaler = artifacts['scaler']
-    
-    known_batters = set(batter_enc.classes_)
-    pruned_data = pruned_data[pruned_data['batter'].isin(known_batters)]
-    print(f"Rows after batter filtering: {len(pruned_data)}")
-    if len(pruned_data) == 0:
-        raise ValueError("No known batters found in dataset")
-    pruned_data['batter_id'] = batter_enc.transform(pruned_data['batter'])
-    
-    known_outcomes = set(outcome_enc.classes_)
-    pruned_data = pruned_data[pruned_data['outcome_text'].isin(known_outcomes)]
-    print(f"Rows after outcome filtering: {len(pruned_data)}")
-    if len(pruned_data) == 0:
-        raise ValueError("No known outcomes found in dataset")
-    pruned_data['outcome_id'] = outcome_enc.transform(pruned_data['outcome_text'])
-    
-    known_pitches = set(pitch_enc.classes_)
-    pruned_data = pruned_data[pruned_data['pitch_type'].isin(known_pitches)]
-    print(f"Rows after pitch type filtering: {len(pruned_data)}")
-    if len(pruned_data) == 0:
-        raise ValueError("No known pitch types found in dataset")
-    pruned_data['pitch_type_id'] = pitch_enc.transform(pruned_data['pitch_type'])
-    
-    known_patterns = set(batter_pattern_enc.classes_)
-    pruned_data = pruned_data[pruned_data['batting_pattern'].isin(known_patterns)]
-    
-    pruned_data['batting_pattern_id'] = batter_pattern_enc.transform(pruned_data['batting_pattern'])
-    pruned_data['launch_speed_angle_id'] = launch_speed_angle_enc.transform(pruned_data['launch_speed_angle'])
-    
-    pruned_data[feature_cols] = scaler.transform(pruned_data[feature_cols].astype(float))
-    
-    pruned_data = pruned_data.replace([np.inf, -np.inf], np.nan)
-    pruned_data = pruned_data.dropna(subset=feature_cols)
-    
-    return pruned_data
+        for _, row in batter_pitches.iterrows():
+            features = torch.tensor(
+                row[self.FEATURE_COLS].values.astype(np.float32),
+                dtype=torch.float32
+            ).unsqueeze(0).to(self.device)
+
+            batter_tensor = torch.tensor([batter_id], dtype=torch.long).to(self.device)
+            pitch_type_tensor = torch.tensor([int(row['pitch_type_id'])], dtype=torch.long).to(self.device)
+
+            with torch.no_grad():
+                logits = self.model(batter_tensor, pitch_type_tensor, features)
+                probs = torch.softmax(logits, dim=1).cpu().numpy()[0]
+
+            prob_dict = {
+                self.outcome_labels[i]: float(probs[i])
+                for i in range(len(self.outcome_labels))
+            }
+
+            ev_result = self.ev_calculator.calculate_swing_vs_take(prob_dict)
+            coord = (float(row['plate_x']), float(row['plate_z']))
+            batter_heatmap[coord] = ev_result['ev_diff']
+
+        return batter_heatmap
+
 
 def main():
+    model_path = str(project_root.parent / "final_batter_outcome_model.pth")
 
-    repo = PyBaseballRepository()
-    dataset = repo.fetch_pitch_data('2023-03-30', '2024-11-02')
-    artifacts = load_model_and_artifacts()
+    data_access = PybaseballDataAccess()
+    preprocessor = PreprocessorAdapter()
+    storage = ModelStorageAdapter()
+    model_adapter = ModelAdapter()
 
-    processed_data = preprocess_data(dataset, artifacts)
+    print("Fetching pitch data...")
+    raw_data = data_access.fetch_data('2023-03-30', '2024-11-02')
+    print(f"Fetched {len(raw_data)} rows")
+
+    print("Loading model...")
+    model_entity = storage.load_model(model_path)
+    if model_entity is None:
+        raise ValueError(f"Failed to load model from {model_path}")
+
+    artifacts = model_entity.artifacts
+    print(f"Model loaded: {artifacts.num_batters} batters, {artifacts.num_pitches} pitch types, {artifacts.num_outcomes} outcomes")
+
+    print("Preprocessing data for inference...")
+    processed_data = preprocessor.preprocess_for_inference(raw_data, artifacts)
+    print(f"Preprocessed {len(processed_data)} rows")
+
+    model = model_adapter.create_model(
+        num_batters=artifacts.num_batters,
+        num_pitch_types=artifacts.num_pitches,
+        num_outcomes=artifacts.num_outcomes
+    )
+    model = model_adapter.load_model_state(model, model_entity.state_dict)
+    model.eval()
+
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     run_value_repo = RunValueRepository()
     run_values = run_value_repo.load_run_values()
-
     ev_calculator = EVCalculator(run_values)
-    heatmap_gen = HeatmapGenerator(model=artifacts['model'], device=artifacts['device'], outcome_labels=artifacts['outcome_labels'], ev_calculator=ev_calculator)
-    
+
+    heatmap_gen = HeatmapGeneratorCA(
+        model=model,
+        device=device,
+        outcome_labels=artifacts.labels,
+        ev_calculator=ev_calculator
+    )
+
+    print("Generating heatmaps...")
     heatmap_dict = heatmap_gen.generate(processed_data)
 
     serialized = {
@@ -237,6 +144,9 @@ def main():
             indent=2,
             default=lambda o: float(o) if isinstance(o, (np.floating, np.integer)) else o,
         )
+
+    print(f"Heatmap saved to {output_path}")
+
 
 if __name__ == "__main__":
     main()

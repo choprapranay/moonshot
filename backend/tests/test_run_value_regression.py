@@ -1,7 +1,7 @@
 import pytest
 import pandas as pd
 from unittest.mock import Mock, patch, mock_open
-from backend.use_cases.run_value_regression import load_season_safe, main
+from machine_learning.use_cases.run_value_regression import load_season_safe, main
 
 class TestLoadSeasonSafe: 
 
@@ -48,9 +48,9 @@ class TestMain:
     @patch('json.dump')                     
     @patch('builtins.print')
     @patch('builtins.open', new_callable=mock_open)
-    @patch('backend.use_cases.run_value_regression.load_season_safe')
-    @patch('backend.use_cases.run_value_regression.RunValueCalculator')
-    @patch('backend.use_cases.run_value_regression.PyBaseballRepository') 
+    @patch('machine_learning.use_cases.run_value_regression.load_season_safe')
+    @patch('machine_learning.use_cases.run_value_regression.RunValueCalculator')
+    @patch('machine_learning.use_cases.run_value_regression.PyBaseballRepository') 
 
     def test_main_success(self, mock_repo_class, mock_calculator_class, mock_load_season, mock_file, mock_print, mock_json_dump):
         mock_repo = Mock()
@@ -120,8 +120,8 @@ class TestMain:
             'strikeout': -0.301
         }
 
-    @patch('backend.use_cases.run_value_regression.PyBaseballRepository')
-    @patch('backend.use_cases.run_value_regression.load_season_safe')
+    @patch('machine_learning.use_cases.run_value_regression.PyBaseballRepository')
+    @patch('machine_learning.use_cases.run_value_regression.load_season_safe')
     
     def test_main_with_empty_data(self, mock_load_season, mock_repo_class):
         
