@@ -10,10 +10,15 @@ load_dotenv(dotenv_path=env_path)
 
 class SupabaseClient:
 
-    def __init__(self):
-        # Use service role key if available (for admin operations), otherwise anon key
-        supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
-        self.client = create_client(
+    _instance = None
+
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super().__new__(cls)
+            supabase_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY") or os.getenv("SUPABASE_ANON_KEY")
+            cls._instance.client = create_client(
             os.getenv("SUPABASE_URL"),
             supabase_key
         )
+        return cls._instance
