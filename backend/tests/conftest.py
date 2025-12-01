@@ -11,3 +11,4 @@ if 'supabase' not in sys.modules:
 if 'dotenv' not in sys.modules:
     sys.modules['dotenv'] = MagicMock()
     sys.modules['dotenv'].load_dotenv = MagicMock()
+

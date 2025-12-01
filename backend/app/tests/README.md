@@ -6,6 +6,7 @@ This test suite provides 100% code coverage for the `FetchGameDataUseCase` use c
 
 ### Install Dependencies
 ```bash
+cd backend
 pip install pytest pytest-cov pandas fastapi
 ```
 
@@ -13,6 +14,7 @@ pip install pytest pytest-cov pandas fastapi
 ```bash
 # From backend directory
 pytest app/tests/test_fetch_game_data.py --cov=app/use_cases/fetch_game_data --cov-report=term-missing --cov-report=html
+
 ```
 
 ### View Coverage Report
