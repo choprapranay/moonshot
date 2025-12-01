@@ -94,3 +94,12 @@ pytest app/tests/test_fetch_game_data.py --cov=app/use_cases/fetch_game_data --c
 
 ```
 
+# Test Suite for NerualNetsCA
+
+This test suite tests code coverage for all of NeuralNetsCA use cases. `TestInference` and `TestBuildDatasetUseCase` and `TestTrainModel`
+
+```bash
+# From backend 
+python -m pytest tests/test_train_NN.py -v
+```
+
