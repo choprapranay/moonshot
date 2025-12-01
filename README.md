@@ -1,11 +1,12 @@
 
 To try our project online, use this link: `https://moonshot-deploy.vercel.app/`, however, keep in mind our backend runs on free tier of render, which limits our RAM usage thus we were only able to deploy a miniature version of our ML model that is only trained on two weeks worth of data. Which means the heatmap will have much less data and less accurate. Please run localhost to try out the full version of the ML model.
 
-This is for the Bait, a baseball analytics company
+This is for BaiT, a baseball analytics company
 
 Moonshot is a powerful tool to help batters improve their pitch discipline. As in baseball, that is one of the most important factors to determining the victorious team. This can work well with something like Trajekt, helping target batters' weak spots to improve overall runs per plate appearance.
 
 Moonshot allows you to analyse the optimal swing/take locations for a batter through a colored heatmap where red regions represent where batters should not swing and blue regions represent where batters should swing. This is overlaid with a game of your choosing and relevant pitches said batter has faced. This way, you can analyse where batters' weak spots (and for that matter where pitchers can target) and create a personalized training regimen. 
+
 
 Authors:
 Yash Jain
