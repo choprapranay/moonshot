@@ -3,7 +3,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
 
 import pandas as pd
-from backend.infrastructure.supabase_repository import SupabaseRepository
+from machine_learning.infrastructure.supabase_repository import SupabaseRepository
 
 from domain.interfaces import DataAccessInterface
 

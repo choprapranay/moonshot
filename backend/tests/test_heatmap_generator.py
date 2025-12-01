@@ -4,8 +4,8 @@ import pandas as pd
 import torch
 import numpy as np
 from unittest.mock import Mock, MagicMock, patch
-from backend.use_cases.heatmap_generator import HeatmapGenerator
-from backend.domain.ev_calculation import EVCalculator
+from machine_learning.use_cases.heatmap_generator import HeatmapGenerator
+from machine_learning.domain.ev_calculation import EVCalculator
 
 class TestHeatmapGenerator:
     @pytest.fixture
