@@ -1,0 +1,2 @@
+export { IBaseballRepository } from "./IBaseballRepository";
+

@@ -1,17 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useMemo, useRef, useState } from "react";
-
-type HeatmapPoint = {
-  plate_x: number;
-  plate_z: number;
-  expected_value_diff: number;
-};
-
-type SwingPoint = {
-  plate_x: number;
-  plate_z: number;
-  pitch_type?: string | null;
-  description?: string | null;
-};
+import { HeatmapPoint, SwingPoint } from "@/domain/entities/Heatmap";
 
 type StrikeZoneHeatmapProps = {
   heatmap: HeatmapPoint[];
