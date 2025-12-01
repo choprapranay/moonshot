@@ -1,15 +1,20 @@
-from typing import Optional
 import pandas as pd
 from pybaseball import statcast
 
-from domain.interfaces import PitchEventRepositoryInterface
-class PybaseballPitchEventRepository(PitchEventRepositoryInterface):
-    def __init__(self, default_start: Optional[str] = None, default_end: Optional[str] = None):
-        self.default_start = default_start
-        self.default_end = default_end
+from domain.interfaces import DataAccessInterface
 
-    def fetch_events(self, start_date: str, end_date: str) -> pd.DataFrame:
-        start = start_date or self.default_start
-        end = end_date or self.default_end
-        df = statcast(start, end)
-        return df
+
+class PybaseballDataAccess(DataAccessInterface):
+    def __init__(self):
+        self._source_name = "pybaseball"
+    
+    def fetch_data(self, start_date: str, end_date: str) -> pd.DataFrame:
+        try:
+            data = statcast(start_date, end_date)
+            return data
+        except Exception as e:
+            print(f"Error fetching data from pybaseball: {e}")
+            return pd.DataFrame()
+    
+    def get_source_name(self) -> str:
+        return self._source_name
