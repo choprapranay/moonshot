@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import games
-from app.services import baseball
+from app.api import games, baseball
 
 app = FastAPI()
 
