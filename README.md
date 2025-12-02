@@ -30,8 +30,39 @@ Sumedh Gadepalli
 Jeff Lu
 Sambhav Athreya
 
-Setup instructions:
-# Getting Started
+---
+
+## Tech Stack
+
+### Frontend
+- **Next.js** - React framework for server-side rendering and static site generation
+- **TypeScript** - Type-safe JavaScript
+- **Tailwind CSS** - Utility-first CSS framework
+
+### Backend
+- **FastAPI** - Modern Python web framework for building APIs
+- **Uvicorn** - ASGI server for running FastAPI applications
+
+### Machine Learning
+- **PyTorch** - Deep learning framework for neural network training and inference
+- **scikit-learn** - Machine learning utilities (LabelEncoder, StandardScaler)
+- **NumPy & Pandas** - Data manipulation and numerical computing
+- **pybaseball** - MLB Statcast data fetching
+
+### Database & Storage
+- **Supabase** - PostgreSQL-based backend-as-a-service for data storage
+
+### Architecture
+- **Clean Architecture** - Separation of concerns with domain, use cases, and infrastructure layers
+- **Adapter Pattern** - Converting external interfaces to domain requirements
+- **Singleton Pattern** - Single database connection management
+
+### Machine Learning Model
+The model outputs a distribution of outcome likelihoods through a Deep Neural Network, with an embedding layer applied to the batters, pitch type and outcome type prior to feeding into the linear nodes of the model. Fine tuning was done, and we experimented with a more advanced model using an attention mechanism where the feature and classifier networks were linear nodes followed by BatchNormalization and Dropout.
+
+---
+
+## Getting Started
 
 To get this project up and running on your local machine, follow these steps:
 
@@ -90,8 +121,11 @@ npm run dev
 ```
 Once both servers are running, open your browser and navigate to `http://localhost:3000` to view the application.
 
-### Testing
-# Test Suite for FetchGameDataUseCase
+---
+
+## Testing
+
+### FetchGameDataUseCase
 
 This test suite provides 100% code coverage for the `FetchGameDataUseCase` use case interactor.
 
@@ -106,11 +140,10 @@ pip install pytest pytest-cov pandas fastapi
 ### Run Tests with Coverage
 ```bash
 # From backend directory
-pytest app/tests/test_fetch_game_data.py --cov=app/use_cases/fetch_game_data --cov-report=term-missing --cov-report=html'''
-
+pytest app/tests/test_fetch_game_data.py --cov=app/use_cases/fetch_game_data --cov-report=term-missing --cov-report=html
 ```
 
-# Test Suite for NeuralNetsCA
+### NeuralNetsCA
 
 This test suite tests code coverage for all of NeuralNetsCA use cases. `TestInference` and `TestBuildDatasetUseCase` and `TestTrainModel`
 
@@ -123,10 +156,10 @@ If you wish to train or run prediction yourself, you should run
 
 ```bash
 # From NeuralNetsCA
-python main.py --mode #train or test --data-source pybaseball --model-type #standard or improved --start-date yyyy-mm-dd --end-date yyyy-mm-dd --epochs 5 --lr 0.001 --batch-size 16 
+python main.py --mode train --data-source pybaseball --model-type standard --start-date 2023-03-30 --end-date 2023-04-30 --epochs 5 --lr 0.001 --batch-size 16
 ```
 
-# Test Suite for LinearRegression
+### LinearRegression
 
 This test suite tests code coverage for the run_value_regression use case interactor. 
 
