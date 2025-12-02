@@ -1,3 +1,4 @@
+#
 
 Disclaimer: To see our project online, use this link: `https://moonshot-deploy.vercel.app/`, however, note that our backend employs the free tier of render, which limits our RAM usage. Thus, we were only able to deploy a miniature version of our ML model that is only trained on two weeks worth of data. This has a direct influence on the accuracy of the heatmaps that are displayed. Please run localhost to try out the full version of the ML model.
 
@@ -24,12 +25,13 @@ Implementation of design patterns:
 - A pattern we've applied outside of the ones discussed in class is the Singleton Design Pattern, which is implemented in the connection to Supabase. This ensures that only one connection to the database exists, thereby saving computational resources. 
 
 
-Authors:
-Yash Jain
-Pranay Chopra
-Sumedh Gadepalli
-Jeff Lu
-Sambhav Athreya
+### Authors
+
+- [Yash Jain]([https://github.com/YashJain14](https://github.com/InfiniteInbox))
+- [Pranay Chopra](https://github.com/choprapranay) 
+- [Sumedh Gadepalli](https://github.com/sumedh71)
+- [Jeff Lu](https://github.com/Jeff15321) 
+- [Sambhav Athreya](https://github.com/SambhavAthreyaGit) 
 
 ---
 
