@@ -22,8 +22,8 @@ class BatterDataset(Dataset):
     def __getitem__(self, index: int):
         row = self.df.loc[index]
         
-        batter_id = int(row['batter_id'])
-        pitch_type_id = int(row['pitch_type_id'])
+        batter_id = int(row['batter_id']) #Ignore linting error
+        pitch_type_id = int(row['pitch_type_id']) #Ignore linting error
         
         features = torch.tensor(row[self.FEATURE_COLUMNS].values.astype(np.float32), dtype=torch.float32)
         

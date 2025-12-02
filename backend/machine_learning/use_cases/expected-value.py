@@ -11,10 +11,11 @@ sys.path.insert(0, str(project_root / "neuralnetsCA"))
 import torch
 import numpy as np
 
-from neuralnetsCA.infrastructure.data.pybaseball_pull import PybaseballDataAccess
-from neuralnetsCA.infrastructure.data.preprocess_adapter import PreprocessorAdapter
-from neuralnetsCA.infrastructure.data.model_adapter import ModelAdapter
-from neuralnetsCA.infrastructure.storage.storage_adapter import ModelStorageAdapter
+# This works as the project root has been added to sys.path, ignore linting errors
+from infrastructure.data.pybaseball_pull import PybaseballDataAccess
+from infrastructure.data.preprocess_adapter import PreprocessorAdapter
+from infrastructure.data.model_adapter import ModelAdapter
+from infrastructure.storage.storage_adapter import ModelStorageAdapter
 from machine_learning.infrastructure.run_value_repository import RunValueRepository
 from machine_learning.domain.ev_calculation import EVCalculator
 
@@ -85,7 +86,7 @@ def main():
     model_adapter = ModelAdapter()
 
     print("Fetching pitch data...")
-    raw_data = data_access.fetch_data('2023-03-30', '2024-11-02')
+    raw_data = data_access.fetch_data('2023-03-30', '2023-04-01')
     print(f"Fetched {len(raw_data)} rows")
 
     print("Loading model...")
