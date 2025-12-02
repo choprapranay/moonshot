@@ -119,6 +119,13 @@ This test suite tests code coverage for all of NeuralNetsCA use cases. `TestInfe
 python -m pytest tests/test_train_NN.py -v
 ```
 
+If you wish to train or run prediction yourself, you should run 
+
+```bash
+# From NeuralNetsCA
+python main.py --mode #train or test --data-source pybaseball --model-type #standard or improved --start-date yyyy-mm-dd --end-date yyyy-mm-dd --epochs 5 --lr 0.001 --batch-size 16 
+```
+
 # Test Suite for LinearRegression
 
 This test suite tests code coverage for the run_value_regression use case interactor. 
