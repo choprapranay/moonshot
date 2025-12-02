@@ -1,0 +1,10 @@
+torch>=2.0.0
+numpy>=2.0.0
+pandas>=2.0.0
+scikit-learn>=1.0.0
+
+pybaseball>=2.2.0
+supabase>=2.0.0
+
+tqdm>=4.60.0
+python-dotenv>=1.0.0
