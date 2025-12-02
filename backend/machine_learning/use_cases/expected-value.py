@@ -86,7 +86,7 @@ def main():
     model_adapter = ModelAdapter()
 
     print("Fetching pitch data...")
-    raw_data = data_access.fetch_data('2023-03-30', '2023-04-01')
+    raw_data = data_access.fetch_data('2023-03-30', '2024-11-02')
     print(f"Fetched {len(raw_data)} rows")
 
     print("Loading model...")
