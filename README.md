@@ -1,11 +1,11 @@
 
-To try our project online, use this link: `https://moonshot-deploy.vercel.app/`, however, keep in mind our backend runs on free tier of render, which limits our RAM usage thus we were only able to deploy a miniature version of our ML model that is only trained on two weeks worth of data. Which means the heatmap will have much less data and less accurate. Please run localhost to try out the full version of the ML model.
+Disclaimer: To see our project online, use this link: `https://moonshot-deploy.vercel.app/`, however, note that our backend employs the free tier of render, which limits our RAM usage. Thus, we were only able to deploy a miniature version of our ML model that is only trained on two weeks worth of data. This has a direct influence on the accuracy of the heatmaps that are displayed. Please run localhost to try out the full version of the ML model.
 
-This is for BaiT, a baseball analytics company focused in distilling large-scale performance data into actionable insights.
+This project was developed in partnership with BaiT, a baseball analytics company focused in distilling large-scale performance data into actionable insights. 
 
 Moonshot is an AI-driven decision tool to help batters improve their pitch discipline. In baseball, that is one of the most important factors to determining the victorious team. This can work well with something like Trajekt, helping target batters' weak spots to improve overall runs per plate appearance.
 
-Moonshot allows you to analyse the optimal swing/take locations for a batter through a colored heatmap where red regions represent where batters should not swing and blue regions represent where batters should swing. This is overlaid with a game of your choosing and relevant pitches said batter has faced. This way, you can analyse where batters' weak spots (and for that matter where pitchers can target) and create a personalized training regimen. 
+Moonshot allows you to analyze the optimal swing/take locations for a batter through a colored heatmap where red regions represent where batters should not swing and blue regions represent where batters should swing. This is overlaid with a game of your choosing and relevant pitches said batter has faced. This way, you can analyse where batters' weak spots (and for that matter where pitchers can target) and create a personalized training regimen. 
 
 
 Implementation of SOLID design principles: 
@@ -23,10 +23,11 @@ Implementation of design patterns:
 - One design pattern we've implemented is the Adapter Design Pattern, which allows us to convert the interface of one module to one required by another. This is exemplified in our neural network implementation, where we have adapters such as a DatasetController to convert raw external output into domain input required by the use case. 
 - A pattern we've applied outside of the ones discussed in class is the Singleton Design Pattern, which is implemented in the connection to Supabase. This ensures that only one connection to the database exists, thereby saving computational resources. 
 
+
 Authors:
 Yash Jain
 Pranay Chopra
-Sumedh Gadepalli 
+Sumedh Gadepalli
 Jeff Lu
 Sambhav Athreya
 
@@ -43,7 +44,7 @@ Sambhav Athreya
 - **FastAPI** - Modern Python web framework for building APIs
 - **Uvicorn** - ASGI server for running FastAPI applications
 
-### Machine Learning
+### Machine Learning Tools
 - **PyTorch** - Deep learning framework for neural network training and inference
 - **scikit-learn** - Machine learning utilities (LabelEncoder, StandardScaler)
 - **NumPy & Pandas** - Data manipulation and numerical computing
@@ -53,13 +54,12 @@ Sambhav Athreya
 - **Supabase** - PostgreSQL-based backend-as-a-service for data storage
 
 ### Architecture
-- **Clean Architecture** - Separation of concerns with domain, use cases, and infrastructure layers
-- **Adapter Pattern** - Converting external interfaces to domain requirements
-- **Singleton Pattern** - Single database connection management
+- **Clean Architecture** - Separation of concerns with domain, use cases, and infrastructure layers [Potential violation: for the linear regression/expected value calculation, we retain the JSON files directly in the folder since they're intermediate, temporary algorithmic outputs, and the domain logic works in tandem with them. They belong to the pipeline of the ML workflow, which is why it's easier to retain them with the business logic. These files are just snapshots of the algorithm’s internal data to allow repeatable runs and debugging. These JSON files are not persistence or infrastructure storage in our case, which is why we believed it would be appropriate to store them with the domain logic.]
 
-### Machine Learning Model
-The model outputs a distribution of outcome likelihoods through a Deep Neural Network, with an embedding layer applied to the batters, pitch type and outcome type prior to feeding into the linear nodes of the model. Fine tuning was done, and we experimented with a more advanced model using an attention mechanism where the feature and classifier networks were linear nodes followed by BatchNormalization and Dropout.
+(design patterns and use of SOLID principles discussed above)
 
+### Algorithm/ML
+Moonshot is built on a suite of two models; the first is a neural network. We utilize a deep neural network to output a distribution of outcome likelihoods, with an embedding layer applied to the batters, pitch type and outcome type prior to feeding into the linear nodes of the model. Fine-tuning was done, and we experimented with a more advanced model using an attention mechanism where the feature and classifier networks were linear nodes followed by BatchNormalization and Dropout. In parallel, using the same training set, we performed a linear regression to compute the average run values that occur for each outcome (ex: a walk yields 0.296 runs on average). Both the probability distributions for each player and the average run values for the outcomes were passed into an algorithm computing the expected values for each batter. The algorithm iterates through the likelihood of swing/take outcomes for each batter and then multiplies each outcome with the average run values it yields (generated by the regression) to then produce expected values for each set of swing/take outcomes. The differences of each are then computed to see which plate decision is more beneficial. 
 ---
 
 ## Getting Started
