@@ -42,7 +42,7 @@ Implementation of design patterns:
 
 ### Authors
 
-- [Yash Jain]([https://github.com/YashJain14](https://github.com/InfiniteInbox))
+- [Yash Jain](https://github.com/InfiniteInbox)
 - [Pranay Chopra](https://github.com/choprapranay) 
 - [Sumedh Gadepalli](https://github.com/sumedh71)
 - [Jeff Lu](https://github.com/Jeff15321) 
