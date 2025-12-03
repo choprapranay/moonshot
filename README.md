@@ -82,62 +82,90 @@ Moonshot is built on a suite of two models; the first is a neural network. We ut
 
 ## Getting Started
 
-To get this project up and running on your local machine, follow these steps:
+Follow these steps to get Moonshot running on your local machine.
+
+---
 
 ## Prerequisites
 
 Make sure you have the following installed:
 
-- [Node.js](https://nodejs.org/) (version 14 or higher)  
-- [Python](https://www.python.org/) (version 3.8 or higher)  
-- [Pip](https://pip.pypa.io/en/stable/) (Python package manager)
+| Requirement | Version | Download |
+|-------------|---------|----------|
+| **Node.js** | 14 or higher | [nodejs.org](https://nodejs.org/) |
+| **Python** | 3.8 or higher | [python.org](https://www.python.org/) |
+| **pip** | Latest | Included with Python |
 
 ---
 
 ## Installation
 
-### 1. Clone the repository:
+### Step 1: Clone the Repository
 
 ```bash
 git clone https://github.com/choprapranay/moonshot.git
 cd moonshot
 ```
-### 2. Navigate to the backend directory and install the required Python packages:
+
+---
+
+### Step 2: Create a Virtual Environment
+
 ```bash
-cd backend
 python -m venv venv
-source venv/Scripts/activate
+```
+
+**Activate the virtual environment:**
+
+| OS | Command |
+|----|---------|
+| **Windows (PowerShell)** | `.\venv\Scripts\Activate.ps1` |
+| **Windows (CMD)** | `.\venv\Scripts\activate.bat` |
+| **macOS / Linux** | `source venv/bin/activate` |
+
+---
+
+### Step 3: Install Python Dependencies
+
+```bash
 pip install -r requirements.txt
 ```
-### 3. Navigate to the frontend directory and install the required Node.js packages:
+
+---
+
+### Step 4: Configure Environment Variables
+
+Create a `.env` file inside the `backend/` directory with the following:
+
+```
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+```
+
+---
+
+### Step 5: Run the Backend
+
+```bash
+cd backend
+python main.py
+```
+
+The backend will be running at: `http://127.0.0.1:8000`
+
+---
+
+### Step 6: Run the Frontend
+
+Open a **new terminal** and run:
+
 ```bash
 cd frontend
 npm install
-```
-## Configuration
-Create a .env file inside the backend directory and add your environment variables:
-```
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
-```
-
-Create a .env.local file inside the frontend directory and add your environment variables:
-```
-NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000
-```
-
-## Running the Application
-Start the backend server:
-```bash
-cd backend
-uvicorn app.main:app --reload
-```
-Start the frontend development server:
-```bash
-cd frontend
 npm run dev
 ```
-Once both servers are running, open your browser and navigate to `http://localhost:3000` to view the application.
+
+The frontend will be running at: `http://localhost:3000`
 
 ---
 
