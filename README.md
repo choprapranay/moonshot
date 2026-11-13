@@ -1,3 +1,5 @@
+https://github.com/user-attachments/assets/8bb0106d-4fcc-45a8-be3f-121bbd77e564
+
 #
 
 Disclaimer: To see our project online, use this link: `https://moonshot-deploy.vercel.app/`, however, note that our backend employs the free tier of render, which limits our RAM usage. Thus, we were only able to deploy a miniature version of our ML model that is only trained on two weeks worth of data. This has a direct influence on the accuracy of the heatmaps that are displayed. Please run localhost to try out the full version of the ML model.
